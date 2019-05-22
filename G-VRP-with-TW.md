@@ -137,15 +137,11 @@ Assume that there are n customers with demand D_(i,) i=1,..n, one depot denoted 
 
 
 
-
-
-
-
-
-
-
-
-
-
+$$
+xy^2+y+z-xz^2\\
+\leftrightarrow x(y^2-z^2)+y+z\\
+\leftrightarrow x(y+z)(y-z)+y+z\\
+\leftrightarrow (y+z)\bigl\{ x(y-z) + 1 \bigr\}\\
+$$
 
 
