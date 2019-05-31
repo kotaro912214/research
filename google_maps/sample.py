@@ -8,7 +8,11 @@ import urllib.request
 from pygeocoder import Geocoder
 import googlemaps
 
-API_KEY = 'AIzaSyB1hzdNcmuujGGhI8N0SLLC7u_QI8ib7YY'
+api_path = './api.txt'
+f = open(api_path)
+API_KEY = f.read()
+print(API_KEY)
+
 output_path = './'
 pixel = '640x480'
 scale = '18'
