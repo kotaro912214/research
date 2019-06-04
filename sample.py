@@ -7,6 +7,7 @@ b = np.array([60, 36, 48])
 c = np.array([150, 200, 300])
 (m, n) = A.shape
 
+
 # define LpProblem obeject
 prob = pulp.LpProblem(name='production', sense=pulp.LpMaximize)
 x = [pulp.LpVariable('x' + str(i + 1), lowBound=0) for i in range(n)]
