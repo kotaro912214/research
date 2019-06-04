@@ -3,14 +3,7 @@ import urllib.parse
 import datetime
 import random
 import numpy as np
-
-# import API key from other file for perspective of security
-api_path = './api.txt'
-f = open(api_path)
-API_KEY = f.read()
-
-# count of data(origins and destinations)
-N = 10
+import time
 
 # create random coords for origins
 def makeOrigin(n):
@@ -35,26 +28,46 @@ def makeDestinations(n):
   return destinations
 
 
-#create request from params
-endpoint = 'https://maps.googleapis.com/maps/api/distancematrix/json?'
-key = '&key=' + API_KEY
-request = endpoint + makeOrigin(N) + makeDestinations(N) + key
+def main():
+  # import API key from other file for perspective of security
+  api_path = './api.txt'
+  f = open(api_path)
+  API_KEY = f.read()
 
-# send request and recieve response
-response = urllib.request.urlopen(request).read()
-directions = json.loads(response)
+  # count of data(origins and destinations)
+  N = 10
 
-# create matrix A which indicates shortest path between each origins and destinations
-A = np.zeros((N, N))
-i = 0
-j = 0
-# directions is a json object
-for row in directions['rows']:
+  #create request from params
+  endpoint = 'https://maps.googleapis.com/maps/api/distancematrix/json?'
+  key = '&key=' + API_KEY
+  request = endpoint + makeOrigin(N) + makeDestinations(N) + key
+
+  # send request and recieve response
+  response = urllib.request.urlopen(request).read()
+  directions = json.loads(response)
+
+  # create matrix A which indicates shortest path between each origins and destinations
+  A = np.zeros((N, N))
+  i = 0
   j = 0
-  for element in row['elements']:
-    distance = element['distance']['value']
-    A[i][j] += distance
-    j += 1
-  i += 1
+  # directions is a json object
+  for row in directions['rows']:
+    j = 0
+    for element in row['elements']:
+      distance = element['distance']['value']
+      A[i][j] += distance
+      j += 1
+    i += 1
 
-print(A)
+  print(A)
+
+#-*- using:utf-8 -*-
+
+if __name__ == '__main__':
+  start = time.time()
+
+  # write some processing codes here
+  main()
+
+  elapsed_time = time.time() - start
+  print ("time:{0}".format(elapsed_time) + "[sec]")
