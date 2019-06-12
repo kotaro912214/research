@@ -41,7 +41,7 @@ def main():
   endpoint = 'https://maps.googleapis.com/maps/api/distancematrix/json?'
   key = '&key=' + API_KEY
   request = endpoint + makeOrigin(N) + makeDestinations(N) + key
-
+  print(request)
   # send request and recieve response
   response = urllib.request.urlopen(request).read()
   directions = json.loads(response)
