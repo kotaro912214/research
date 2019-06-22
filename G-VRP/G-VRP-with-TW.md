@@ -144,4 +144,12 @@ xy^2+y+z-xz^2\\
 \leftrightarrow (y+z)\bigl\{ x(y-z) + 1 \bigr\}\\
 $$
 
+$$
+min Z = \\c_{ij}(\sum_{(i_t, j_{t+t_{ij}})\ni A_3} \sum_{e\ni E}\ move^e_{i_tj_{t+t_{ij}}} + \sum_{(i_t, j_{t+t_{ij}})\ni A_4} \sum_{e\ni E}\ rel^e_{i_tj_{t+t_{ij}}})\ +\\ c_{out} \sum_{i_t \ni V}\ out^r_it\  +\ c_{in}\ \sum_{i_t \ni V}\ in^r_{it}\ + c_e\ \sum_{e\ni E}\ u^e
+$$
 
+
+
+$$
+cost\ =\ \frac{1}{E-G+1}\ +\ \Delta\ +\ w_tt_t\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (16')
+$$
