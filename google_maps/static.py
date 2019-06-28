@@ -61,7 +61,6 @@ def main():
 
   print(A)
 
-#-*- using:utf-8 -*-
 
 if __name__ == '__main__':
   start = time.time()
