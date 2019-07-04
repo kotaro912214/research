@@ -1,22 +1,34 @@
+# coding: UTF-8
+
 import numpy as np
 import random
 import math
 import pprint
 import pulp
 import time
+import urllib.request, json
+import urllib.parse
+import datetime
+
 
 # for this version there is no round method, so i define the method by myself
 def my_round(val, digit=0):
   p = 10 ** digit
   return int((val * p * 2 + 1) // 2 / p)
 
+# read SID from another file for security perspective
+def readSID():
+  sid_path = '../get_station/sid.txt'
+  f = open(sid_path)
+  SID = f.read()
+  return SID
 
 
 #     data definition     #########################################################################
 
 # define the main constant variables
 NUMBER_OF_EMPLOYEES = 4
-NUMBER_OF_STATIONS = 5
+# NUMBER_OF_STATIONS = 5
 TIME = 3 * 60
 NUMBER_OF_AVAILABLE_VEHICLES_AT_0 = 3
 NUMBER_OF_PARKING_SLOTS = 5
@@ -28,20 +40,59 @@ C_OUT = 250
 # cost of using one one staff during the day
 C_E = 10000 * (TIME / (8*60))
 
+base_url = 'https://api-challenge.navitime.biz/v1s/' + readSID()
+request = base_url + '/spot/list?'
+# 0817001002 カレコ・カーシェアリングのカテゴリコード
+request += 'category=0817001002'
+# word = urllib.parse.quote('新宿')
+# request += '&word=' + word
+# 35.689296,139.702089 is a Shinjuku's coord
+request += '&coord=35.689296,139.702089'
+request += '&radius=1800'
+request += '&limit=5'
+request += '&datum=wgs84'
+response = urllib.request.urlopen(request).read()
+json_res = json.loads(response)
+spots = json_res['items']
+if (json_res['count']['total'] >= json_res['count']['limit']):
+  NUMBER_OF_STATIONS = json_res['count']['limit']
+else:
+  NUMBER_OF_STATIONS = json_res['count']['total']
+
 # define a set of the car stations
 S = list(range(NUMBER_OF_STATIONS))
+
+# S_coord is a row matrix with the coords of the stations 
+S_coord = []
+for spot in spots:
+  S_coord.append((spot['coord']['lat'], spot['coord']['lon']))
 
 # define the step time matrix
 T_step = np.array(list(range(TIME)))
 
 # define the time which transportation between station i to j will take
-T_trans = [
-  [0, 5, 10, 7, 5],
-  [5, 0, 18, 13, 10],
-  [10, 18, 0, 19, 4],
-  [7, 13, 19, 0, 21],
-  [5, 10, 4, 21, 0]
-]
+# T_trans = [
+#   [0, 5, 10, 7, 5],
+#   [5, 0, 18, 13, 10],
+#   [10, 18, 0, 19, 4],
+#   [7, 13, 19, 0, 21],
+#   [5, 10, 4, 21, 0]
+# ]
+base_url += '/route?walk=only&'
+
+T_trans = np.zeros((NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
+for i in range(NUMBER_OF_STATIONS - 1):
+  for j in range(i + 1, NUMBER_OF_STATIONS):
+    start = S_coord[i]
+    goal = S_coord[j]
+    if (start != goal):
+      request = base_url + 'start=' + str(start[0]) + ',' + str(start[1]) + '&goal=' + str(goal[0]) + ',' + str(goal[1])
+      response = urllib.request.urlopen(request).read()
+      json_res = json.loads(response)
+      T_trans[i][j] = json_res['items'][0]['summary']['move']['distance']
+    else:
+      T_trans[i][j] = 0
+
 
 # define the Employees
 E = list(range(NUMBER_OF_EMPLOYEES))
