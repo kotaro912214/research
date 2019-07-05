@@ -90,9 +90,9 @@ for i in range(NUMBER_OF_STATIONS - 1):
       response = urllib.request.urlopen(request).read()
       json_res = json.loads(response)
       T_trans[i][j] = json_res['items'][0]['summary']['move']['distance']
+      T_trans[j][i] = json_res['items'][0]['summary']['move']['distance']
     else:
       T_trans[i][j] = 0
-
 
 # define the Employees
 E = list(range(NUMBER_OF_EMPLOYEES))
