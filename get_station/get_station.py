@@ -14,11 +14,11 @@ def readSID():
   SID = f.read()
   return SID
 
-what_api = {'spot_list':'/spot/list?', 'category_list': '/category/list?'}
+kind_of_api = {'spot_list':'/spot/list?', 'category_list': '/category/list?'}
 
 def main():
   base_url = 'https://api-challenge.navitime.biz/v1s/' + readSID()
-  request = base_url + what_api['spot_list']
+  request = base_url + kind_of_api['spot_list']
   # 0817001002 カレコのカテゴリコード
   request += 'category=0817001002'
   # word = urllib.parse.quote('港区')
@@ -27,7 +27,6 @@ def main():
   request += '&radius=1800'
   request += '&limit=100'
   request += '&datum=wgs84'
-  print(request)
   response = urllib.request.urlopen(request).read()
   json_res = json.loads(response)
   spots = json_res['items']
