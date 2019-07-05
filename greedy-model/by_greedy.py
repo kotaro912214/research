@@ -71,7 +71,7 @@ for spot in spots:
 T_step = np.array(list(range(TIME)))
 
 # define the time which transportation between station i to j will take
-# T_trans = [
+# T_distance = [
 #   [0, 5, 10, 7, 5],
 #   [5, 0, 18, 13, 10],
 #   [10, 18, 0, 19, 4],
@@ -80,7 +80,7 @@ T_step = np.array(list(range(TIME)))
 # ]
 base_url += '/route?walk=only&'
 
-T_trans = np.zeros((NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
+T_distance = np.zeros((NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
 for i in range(NUMBER_OF_STATIONS - 1):
   for j in range(i + 1, NUMBER_OF_STATIONS):
     start = S_coord[i]
@@ -89,10 +89,10 @@ for i in range(NUMBER_OF_STATIONS - 1):
       request = base_url + 'start=' + str(start[0]) + ',' + str(start[1]) + '&goal=' + str(goal[0]) + ',' + str(goal[1])
       response = urllib.request.urlopen(request).read()
       json_res = json.loads(response)
-      T_trans[i][j] = json_res['items'][0]['summary']['move']['distance']
-      T_trans[j][i] = json_res['items'][0]['summary']['move']['distance']
+      T_distance[i][j] = json_res['items'][0]['summary']['move']['distance']
+      T_distance[j][i] = json_res['items'][0]['summary']['move']['distance']
     else:
-      T_trans[i][j] = 0
+      T_distance[i][j] = 0
 
 # define the Employees
 E = list(range(NUMBER_OF_EMPLOYEES))
@@ -109,7 +109,7 @@ price_per_min = price_per_distance * v_mean
 C = [[0 for i in range(NUMBER_OF_STATIONS)] for j in range(NUMBER_OF_STATIONS)]
 for i in range(NUMBER_OF_STATIONS):
   for j in range(NUMBER_OF_STATIONS):
-    C[i][j] = my_round(T_trans[i][j] * price_per_min)
+    C[i][j] = my_round(T_distance[i][j] * price_per_min)
 
 # make the S x T nodes matrix a row vector
 SxT = [[(i, t) for t in T_step] for i in S]
@@ -124,16 +124,16 @@ A2 = []
 for i in range(NUMBER_OF_STATIONS):
   for j in range(i + 1, NUMBER_OF_STATIONS):
     for t in T_step:
-      if (i != j and t + T_trans[i][j] < TIME):
-        A2.append((SxT[i][t], SxT[j][t + T_trans[i][j]]))
+      if (i != j and t + T_distance[i][j] < TIME):
+        A2.append((SxT[i][t], SxT[j][t + T_distance[i][j]]))
 
 # A3, relocation activity arcs sets
 A3 = []
 for i in range(NUMBER_OF_STATIONS):
   for j in range(i + 1, NUMBER_OF_STATIONS):
     for t in T_step:
-      if (i != j and t + T_trans[i][j] < TIME):
-        A3.append((SxT[i][t], SxT[j][t + T_trans[i][j]]))
+      if (i != j and t + T_distance[i][j] < TIME):
+        A3.append((SxT[i][t], SxT[j][t + T_distance[i][j]]))
 
 # define the demand matrix by random
 Demands = np.random.randint(0, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
