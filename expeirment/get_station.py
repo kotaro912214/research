@@ -101,3 +101,12 @@ writeMatrix(Distance, './distance.csv')
 writeMatrix(T_trans, './t_trans.csv')
 writeConst('NUMBER_OF_STATIONS', NUMBER_OF_STATIONS)
 writeConst('FUEL_CONSUMPTION', FUEL_CONSUMPTION)
+
+# define the time which transportation between station i to j will take
+# T_distance = [
+#   [0, 5, 10, 7, 5],
+#   [5, 0, 18, 13, 10],
+#   [10, 18, 0, 19, 4],
+#   [7, 13, 19, 0, 21],
+#   [5, 10, 4, 21, 0]
+# ]
