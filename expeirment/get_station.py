@@ -7,6 +7,7 @@ import pprint
 import time
 import urllib.request, json
 import urllib.parse
+import csv
 
 # read SID from another file for security perspective
 def readSID():
@@ -35,6 +36,16 @@ def getResponse(request):
   return response
 
 
+def writeMatrix(matrix, path):
+  with open(path, 'w') as file:
+      writer = csv.writer(file, lineterminator='\n')
+      writer.writerows(matrix)
+
+def writeConst(const_name, const_value):
+  f = open('./const.csv', 'a')
+  f.write(const_name + ',' + str(const_value) + '\n')
+
+
 KIND_OF_AIP = {'spot_list':'/spot/list?', 'category_list': '/category/list?', 'route': '/route?'}
 
 # set the params for spot list request
@@ -42,7 +53,7 @@ params_spot = {'category': '', 'coord': '', 'radius': '', 'limit': '', 'datum': 
 params_spot['category'] = '0817001002' # category code of careco carsharing
 params_spot['coord'] = '35.689296,139.702089' # a coord of shinjuku station
 params_spot['radius'] = '1800'
-params_spot['limit'] = '3'
+params_spot['limit'] = '50'
 params_spot['datum'] = 'tokyo'
 # word = urllib.parse.quote('港区')
 
@@ -71,6 +82,7 @@ Distance = np.zeros((NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
 T_trans = np.zeros((NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
 for i in range(NUMBER_OF_STATIONS - 1):
   for j in range(i + 1, NUMBER_OF_STATIONS):
+    time.sleep(1)
     if (S_coord[i] != S_coord[j]):
       params_route['start'] = str(S_coord[i][0]) + ',' + str(S_coord[i][1])
       params_route['goal'] = str(S_coord[j][0]) + ',' + str(S_coord[j][1])
@@ -83,3 +95,9 @@ for i in range(NUMBER_OF_STATIONS - 1):
     else:
       Distance[i][j] = 0
       T_trans[i][j] = 0
+
+writeMatrix(S_coord, './s_coord.csv')
+writeMatrix(Distance, './distance.csv')
+writeMatrix(T_trans, './t_trans.csv')
+writeConst('NUMBER_OF_STATIONS', NUMBER_OF_STATIONS)
+writeConst('FUEL_CONSUMPTION', FUEL_CONSUMPTION)
