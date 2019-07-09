@@ -9,7 +9,7 @@ import csv
 
 # read SID from another file for security perspective
 def readSID():
-  sid_path = '../get_station/sid.txt'
+  sid_path = '../../get_station/sid.txt'
   f = open(sid_path)
   SID = f.read()
   return SID
@@ -51,7 +51,7 @@ params_spot = {'category': '', 'coord': '', 'radius': '', 'limit': '', 'datum': 
 params_spot['category'] = '0817001002' # category code of careco carsharing
 params_spot['coord'] = '35.689296,139.702089' # a coord of shinjuku station
 params_spot['radius'] = '1800'
-params_spot['limit'] = '5'
+params_spot['limit'] = '10'
 params_spot['datum'] = 'tokyo'
 # word = urllib.parse.quote('港区')
 
@@ -99,10 +99,10 @@ for i in range(NUMBER_OF_STATIONS - 1):
       Distance[i][j] = 0
       T_trans[i][j] = 0
 
-writeMatrix(S_coord, './s_coord_test.csv')
-writeMatrix(Distance, './distance_test.csv')
-writeMatrix(T_trans, './t_trans_test.csv')
-writeMatrix(S_info, './s_info_test.csv')
+writeMatrix(S_coord, './s_coord.csv')
+writeMatrix(Distance, './distance.csv')
+writeMatrix(T_trans, './t_trans.csv')
+writeMatrix(S_info, './s_info.csv')
 writeConst('NUMBER_OF_STATIONS', NUMBER_OF_STATIONS)
 writeConst('FUEL_CONSUMPTION', FUEL_CONSUMPTION)
 

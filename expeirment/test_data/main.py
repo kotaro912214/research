@@ -121,7 +121,7 @@ for t in T_step:
 # number of available cars at station i at time step t
 Av = np.zeros([NUMBER_OF_STATIONS, TIME])
 
-with open('./test_data/slots.csv', 'r') as f:
+with open('./slots.csv', 'r') as f:
   reader = csv.reader(f)
   i = 0
   for row in reader:
