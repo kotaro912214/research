@@ -17,10 +17,11 @@ def my_round(val, digit=0):
 #     data definition     #########################################################################
 
 const_dic = {}
-with open('./const.csv', 'r') as f:
+with open('C:/Users/kotaro/OneDrive/デスクトップ/research/expeirment/test_10/const.csv', 'r') as f:
   reader = csv.reader(f)
   for row in reader:
     const_dic[row[0]] = row[1]
+
 NUMBER_OF_STATIONS = int(const_dic['NUMBER_OF_STATIONS'])
 FUEL_CONSUMPTION = int(const_dic['FUEL_CONSUMPTION'])
 
@@ -40,7 +41,7 @@ C_E = 10000 * (TIME / (8*60))
 PRICE_PER_15 = 205
 
 S_coord = []
-with open('./s_coord.csv', 'r') as f:
+with open('C:/Users/kotaro/OneDrive/デスクトップ/research/expeirment/test_10/s_coord.csv', 'r') as f:
   reader = csv.reader(f)
   for row in reader:
     S_coord.append((row[0], row[1]))
@@ -48,10 +49,8 @@ with open('./s_coord.csv', 'r') as f:
 # define a set of the car stations
 S = list(range(NUMBER_OF_STATIONS))
 
-
 # define the step time matrix
 T_step = np.array(list(range(TIME)))
-
 
 # define the Employees
 E = list(range(NUMBER_OF_EMPLOYEES))
@@ -64,16 +63,17 @@ price_per_meter = price_per_L / distance_per_L
 v_mean = 30000 / 60
 price_per_min = price_per_meter * v_mean
 
-
+# define the distance matrix between station i and j
 Distance = []
-with open('./distance.csv', 'r') as f:
+with open('C:/Users/kotaro/OneDrive/デスクトップ/research/expeirment/test_10/distance.csv', 'r') as f:
   reader = csv.reader(f)
   for row in reader:
     row = list(map(float, row))
     Distance.append(row)
 
+# define the time which is taken to move between station i and j matrix
 T_trans = []
-with open('./t_trans.csv', 'r') as f:
+with open('C:/Users/kotaro/OneDrive/デスクトップ/research/expeirment/test_10/t_trans.csv', 'r') as f:
   reader = csv.reader(f)
   for row in reader:
     row = list(map(int, list(map(float, row))))
@@ -81,10 +81,10 @@ with open('./t_trans.csv', 'r') as f:
 
 # define the cost while transport from station i to station j
 C = [[0 for i in range(NUMBER_OF_STATIONS)] for j in range(NUMBER_OF_STATIONS)]
-for i in range(NUMBER_OF_STATIONS):
-  for j in range(NUMBER_OF_STATIONS):
+for i in range(NUMBER_OF_STATIONS - 1):
+  for j in range(i + 1, NUMBER_OF_STATIONS):
     C[i][j] = my_round(T_trans[i][j] * price_per_min)
-
+    C[j][i] = C[i][j]
 
 # define the demand matrix by random
 Demands = np.random.randint(-90, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
@@ -96,37 +96,14 @@ for t in T_step:
       if (i == j or Demands[t][i][j] < 0):
         Demands[t][i][j] = 0
 
-# make the S x T nodes matrix a row vector
-SxT = [[(i, t) for t in T_step] for i in S]
-
-V = [(i, t) for i in S for t in range(TIME)]
-
-# A1, waiting activity arcs sets
-A1 = [(V[i], V[i + 1]) for i in range(len(V) - 1)]
-
-# A2, moving activity arcs sets
-A2 = []
-for i in range(NUMBER_OF_STATIONS):
-  for j in range(i + 1, NUMBER_OF_STATIONS):
-    for t in T_step:
-      if (i != j and t + T_trans[i][j] < TIME):
-        A2.append((SxT[i][t], SxT[j][t + T_trans[i][j]]))
-
-# A3, relocation activity arcs sets
-A3 = []
-for i in range(NUMBER_OF_STATIONS):
-  for j in range(i + 1, NUMBER_OF_STATIONS):
-    for t in T_step:
-      if (i != j and t + T_trans[i][j] < TIME):
-        A3.append((SxT[i][t], SxT[j][t + T_trans[i][j]]))
-
-
 # number of available cars at station i at time step t
 Av = np.zeros([NUMBER_OF_STATIONS, TIME])
+
+# define the matrix how many cars each station can hold
 P = np.array([0] * NUMBER_OF_STATIONS)
 
 # initialize it at time step 0
-with open('./slots.csv', 'r') as f:
+with open('C:/Users/kotaro/OneDrive/デスクトップ/research/expeirment/test_10/slots.csv', 'r') as f:
   reader = csv.reader(f)
   i = 0
   for row in reader:
@@ -158,7 +135,6 @@ def main():
             else:
               if (Av[i][t] == 0):
                 rde += 1
-              # elif (Av[j][t] + Av[j][t + T_trans[i][j]] == P[j]):
               elif (sum(Av[j][t:t + T_trans[i][j] + 1]) == P[j]):
                 rdf += 1
               else:
@@ -171,7 +147,7 @@ def main():
                   cost -= PRICE_PER_15 + PRICE_PER_15 * (T_trans[i][j] // 15)
                 success += 1
   cost += C_IN * rdf + C_OUT * rde
-  path = './result_non_jocky.csv'
+  path = 'C:/Users/kotaro/OneDrive/デスクトップ/research/expeirment/test_10/result_non_jocky.csv'
   f = open(path, 'a')
   f.write(str(sum(sum(sum(Demands)))) + ',')
   f.write(str(rdf) + ',')
