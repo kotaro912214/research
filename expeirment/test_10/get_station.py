@@ -46,24 +46,20 @@ def writeConst(const_name, const_value):
 
 KIND_OF_AIP = {'spot_list':'/spot/list?', 'category_list': '/category/list?', 'route': '/route?'}
 
+NUMBER_OF_STATIONS = 10
+
 # set the params for spot list request
 params_spot = {'category': '', 'coord': '', 'radius': '', 'limit': '', 'datum': ''}
 params_spot['category'] = '0817001002' # category code of careco carsharing
 params_spot['coord'] = '35.689296,139.702089' # a coord of shinjuku station
-params_spot['radius'] = '1800'
-params_spot['limit'] = '10'
+params_spot['radius'] = '100000'
+params_spot['limit'] = str(NUMBER_OF_STATIONS)
 params_spot['datum'] = 'tokyo'
-# word = urllib.parse.quote('港区')
 
 # get the data of the station list
 request = makeRequest(KIND_OF_AIP['spot_list'], params_spot)
 json_res = getResponse(request)
 
-# set the number of stations const. and coord of stations matrix
-if (json_res['count']['total'] >= json_res['count']['limit']):
-  NUMBER_OF_STATIONS = json_res['count']['limit']
-else:
-  NUMBER_OF_STATIONS = json_res['count']['total']
 spots = json_res['items']
 S_info = []
 S_coord = []
@@ -105,12 +101,3 @@ writeMatrix(T_trans, './t_trans.csv')
 writeMatrix(S_info, './s_info.csv')
 writeConst('NUMBER_OF_STATIONS', NUMBER_OF_STATIONS)
 writeConst('FUEL_CONSUMPTION', FUEL_CONSUMPTION)
-
-# define the time which transportation between station i to j will take
-# T_distance = [
-#   [0, 5, 10, 7, 5],
-#   [5, 0, 18, 13, 10],
-#   [10, 18, 0, 19, 4],
-#   [7, 13, 19, 0, 21],
-#   [5, 10, 4, 21, 0]
-# ]
