@@ -1,4 +1,6 @@
 *.docx
-google_maps/api.txt
+*.pptx
 NAVITIME
-get_station/sid.txt
+sid.txt
+__pycache__
+api.txt
