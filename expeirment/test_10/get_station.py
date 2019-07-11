@@ -12,6 +12,7 @@ base_path = PureWindowsPath(Path.cwd())
 
 # read SID from another file for security perspective
 def readSID():
+  base_path = PureWindowsPath(Path.cwd())
   sid_path = base_path / 'sid.txt'
   print(sid_path)
   f = open(sid_path)
