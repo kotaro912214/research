@@ -3,6 +3,8 @@ import csv
 import urllib.request, json
 import urllib.parse
 from tqdm import tqdm
+from bs4 import BeautifulSoup
+import time
 
 class Simulation():
 
@@ -70,9 +72,6 @@ class Simulation():
 
 
   def writeConst(self):
-    # f = open('./const.csv', 'a', encoding='utf-8')
-    # f.write(const_name + ',' + str(const_value) + '\n')
-    # f.close()
     self.CONSTS = [
       ['NUMBER_OF_STATIONS', self.NUMBER_OF_STATIONS],
       ['NUMBER_OF_EMPLOYEES', self.NUMBER_OF_EMPLOYEES],
@@ -108,8 +107,27 @@ class Simulation():
       S_info.append([spot['name'], spot['coord']['lat'], spot['coord']['lon']])
     self.writeMatrix(S_coord, self.base_path / ('S_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
     self.writeMatrix(S_info, self.base_path / ('S_info_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
+  
+
+  def makeStationLinks(self):
+    if (not (Path.cwd() / 'station_links.csv').exists()):
+      links = []
+      for i in tqdm(range(1, 5), desc='processing...'):
+        if (i == 1):
+          url = 'https://www.navitime.co.jp/category/0817001002/13'
+        else:
+          url = 'https://www.navitime.co.jp/category/0817001002/13104/?page=' + str(i)
+        time.sleep(1)
+        html = urllib.request.urlopen(url)
+        soup = BeautifulSoup(html, "html.parser")
+        spot_names = soup.find_all(class_="spot_name")
+        for spot_name in spot_names:
+          links.append([spot_name.a.get("href"), spot_name.a.string])
+      self.writeMatrix(links, self.base_path / 'station_links.csv')
+    else:
+      print(Path.cwd() / 'station_links.csv', 'has already exists')
 
 
 
 if (__name__ == '__main__'):
-  print('hs')
+  print('you have to import this file from another file')
