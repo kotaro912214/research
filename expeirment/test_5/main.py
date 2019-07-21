@@ -10,6 +10,4 @@ sim_5 = Simulation(params={
     'FUEL_CONSUMPTION': 35,
     'NUMBER_OF_STATIONS': 10
   })
-# sim_5.makeScoord()
-# sim_5.writeConst()
 sim_5.makeStationLinks()

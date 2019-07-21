@@ -5,6 +5,7 @@ import urllib.parse
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 import time
+from myfunc import my_round
 
 class Simulation():
 
@@ -87,36 +88,40 @@ class Simulation():
 
 
   def makeScoord(self):
-    # set the params for spot list request
-    params_spot = {'category': '', 'coord': '', 'radius': '', 'limit': '', 'datum': ''}
-    params_spot['category'] = '0817001002' # category code of careco carsharing
-    params_spot['coord'] = '35.689296,139.702089' # a coord of shinjuku station
-    params_spot['radius'] = '100000'
-    params_spot['limit'] = str(self.NUMBER_OF_STATIONS)
-    params_spot['datum'] = 'tokyo'
+    file_name =  'S_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'
+    if (not (Path.cwd() / file_name).exists()):
+      # set the params for spot list request
+      params_spot = {'category': '', 'coord': '', 'radius': '', 'limit': '', 'datum': ''}
+      params_spot['category'] = '0817001002' # category code of careco carsharing
+      params_spot['coord'] = '35.689296,139.702089' # a coord of shinjuku station
+      params_spot['radius'] = '100000'
+      params_spot['limit'] = str(self.NUMBER_OF_STATIONS)
+      params_spot['datum'] = 'tokyo'
 
-    # get the data of the station list
-    request = self.makeRequest(self.KIND_OF_AIP['spot_list'], params_spot)
-    json_res = self.getResponse(request)
+      # get the data of the station list
+      request = self.makeRequest(self.KIND_OF_AIP['spot_list'], params_spot)
+      json_res = self.getResponse(request)
 
-    spots = json_res['items']
-    S_info = []
-    S_coord = []
-    for spot in spots:
-      S_coord.append((spot['coord']['lat'], spot['coord']['lon']))
-      S_info.append([spot['name'], spot['coord']['lat'], spot['coord']['lon']])
-    self.writeMatrix(S_coord, self.base_path / ('S_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
-    self.writeMatrix(S_info, self.base_path / ('S_info_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
-  
+      spots = json_res['items']
+      S_info = []
+      S_coord = []
+      for spot in spots:
+        S_coord.append((spot['coord']['lat'], spot['coord']['lon']))
+        S_info.append([spot['name'], spot['coord']['lat'], spot['coord']['lon']])
+      self.writeMatrix(S_coord, self.base_path / ('S_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
+      self.writeMatrix(S_info, self.base_path / ('S_info_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
+    else:
+      print(Path.cwd() / 'S_coord_?.csv', 'has already existed')
+
 
   def makeStationLinks(self):
     if (not (Path.cwd() / 'station_links.csv').exists()):
       links = []
-      for i in tqdm(range(1, 5), desc='processing...'):
+      for i in tqdm(range(7, 51), desc='processing...'):
         if (i == 1):
           url = 'https://www.navitime.co.jp/category/0817001002/13'
         else:
-          url = 'https://www.navitime.co.jp/category/0817001002/13104/?page=' + str(i)
+          url = 'https://www.navitime.co.jp/category/0817001002/13/?page=' + str(i)
         time.sleep(1)
         html = urllib.request.urlopen(url)
         soup = BeautifulSoup(html, "html.parser")
@@ -125,7 +130,7 @@ class Simulation():
           links.append([spot_name.a.get("href"), spot_name.a.string])
       self.writeMatrix(links, self.base_path / 'station_links.csv')
     else:
-      print(Path.cwd() / 'station_links.csv', 'has already exists')
+      print(Path.cwd() / 'station_links.csv', 'has already existed')
 
 
 
