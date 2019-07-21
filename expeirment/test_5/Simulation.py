@@ -49,11 +49,11 @@ class Simulation():
     try:
       response = json.loads(urllib.request.urlopen(request).read())
     except urllib.error.HTTPError as e:
-      print('got HTTPerror, invalid request was issued')
+      print('** error **', 'got HTTPerror, invalid request was issued')
       print('code:', e.code)
       exit()
     except urllib.error.HTTPError as e:
-      print('We failed to reach a server.')
+      print('** error **', 'We failed to reach a server.')
       print('reason:', e.reason)
       exit()
     else:
@@ -111,13 +111,13 @@ class Simulation():
       self.writeMatrix(S_coord, self.base_path / ('S_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
       self.writeMatrix(S_info, self.base_path / ('S_info_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
     else:
-      print(Path.cwd() / 'S_coord_?.csv', 'has already existed')
+      print('** error **', Path.cwd() / 'S_coord_?.csv', 'has already existed')
 
 
   def makeStationLinks(self):
     if (not (Path.cwd() / 'station_links.csv').exists()):
       links = []
-      for i in tqdm(range(7, 51), desc='processing...'):
+      for i in tqdm(range(1, 51), desc='scraping...'):
         if (i == 1):
           url = 'https://www.navitime.co.jp/category/0817001002/13'
         else:
@@ -127,10 +127,28 @@ class Simulation():
         soup = BeautifulSoup(html, "html.parser")
         spot_names = soup.find_all(class_="spot_name")
         for spot_name in spot_names:
-          links.append([spot_name.a.get("href"), spot_name.a.string])
+          links.append(['https:' + spot_name.a.get("href"), spot_name.a.string])
       self.writeMatrix(links, self.base_path / 'station_links.csv')
     else:
-      print(Path.cwd() / 'station_links.csv', 'has already existed')
+      print('** error **', Path.cwd() / 'station_links.csv', 'has already existed')
+
+  
+  def makeAvailableCars(self):
+    if ((Path.cwd() / 'station_links.csv').exists() and not (Path.cwd() / 'available_cars.csv').exists()):
+      csv_file = open(self.base_path / 'station_links.csv', 'r', encoding='utf-8')
+      datas = list(csv.reader(csv_file, delimiter=","))
+      avail_cars = []
+      for i in tqdm(range(len(datas)), desc='scraiping...'):
+        url = datas[i][0]
+        time.sleep(1)
+        html = urllib.request.urlopen(url)
+        soup = BeautifulSoup(html, "html.parser")
+        avail_car = soup.find(class_="detail_contents").find_all("dd")[2].string[:-1]
+        avail_cars.append((datas[i][1], avail_car))
+      self.writeMatrix(avail_cars, self.base_path / 'available_cars.csv')
+    else:
+      print('** error ** there is no file about station links.')
+      print('** error ** OR available_cars.csv has already existed')
 
 
 
