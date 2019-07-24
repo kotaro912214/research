@@ -1,4 +1,5 @@
 from simulation import Simulation
+import myfunc
 
 sim_5 = Simulation(params={
     'NUMBER_OF_EMPLOYEES': 4,
@@ -10,5 +11,8 @@ sim_5 = Simulation(params={
     'FUEL_CONSUMPTION': 35,
     'NUMBER_OF_STATIONS': 10
   })
-sim_5.makeStationLinks()
-sim_5.makeAvailableCars()
+sim_5.make_stations_coord()
+sim_5.make_stations_links()
+sim_5.make_available_cars()
+
+print(myfunc.my_round(2.823321, 2))
