@@ -134,7 +134,11 @@ class Simulation():
 
   
   def makeAvailableCars(self):
-    if ((Path.cwd() / 'station_links.csv').exists() and not (Path.cwd() / 'available_cars.csv').exists()):
+    if (not (Path.cwd() / 'station_links.csv').exists()):
+      print('** error ** there is no file about station links.')
+    elif ((Path.cwd() / 'available_cars.csv').exists()):
+      print('** error ** available_cars.csv has already existed')
+    else:
       csv_file = open(self.base_path / 'station_links.csv', 'r', encoding='utf-8')
       datas = list(csv.reader(csv_file, delimiter=","))
       avail_cars = []
@@ -146,9 +150,8 @@ class Simulation():
         avail_car = soup.find(class_="detail_contents").find_all("dd")[2].string[:-1]
         avail_cars.append((datas[i][1], avail_car))
       self.writeMatrix(avail_cars, self.base_path / 'available_cars.csv')
-    else:
-      print('** error ** there is no file about station links.')
-      print('** error ** OR available_cars.csv has already existed')
+
+
 
 
 
