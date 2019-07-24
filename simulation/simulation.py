@@ -97,7 +97,10 @@ class Simulation():
         )
 
     def make_stations_coord(self):
-        file_name = 'stations_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'
+        coord_file_name = 'stations_coord_' + \
+            str(self.NUMBER_OF_STATIONS) + '.csv'
+        info_file_name = 'stations_info_' + \
+            str(self.NUMBER_OF_STATIONS) + '.csv'
         if (not (Path.cwd() / file_name).exists()):
             # set the params for spot list request
             params_spot = {
@@ -137,13 +140,11 @@ class Simulation():
                 ])
             self.write_matrix(
                 stations_coord,
-                self.base_path /
-                ('stations_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+                self.base_path / coord_file_name
             )
             self.write_matrix(
                 stations_info,
-                self.base_path /
-                ('stations_info_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+                self.base_path / info_file_name
             )
         else:
             print(
@@ -180,13 +181,17 @@ class Simulation():
             )
 
     def make_available_cars(self):
-        if (not (Path.cwd() / 'stations_link.csv').exists()):
+        link_file_name = 'stations_link_' + \
+            str(self.NUMBER_OF_STATIONS) + '.csv'
+        avail_file_name = 'available_cars_' + \
+            str(self.NUMBER_OF_STATIONS) + '.csv'
+        if (not (Path.cwd() / link_file_name).exists()):
             print('** error ** there is no file about station links.')
-        elif ((Path.cwd() / 'available_cars.csv').exists()):
-            print('** error ** available_cars.csv has already existed')
+        elif ((Path.cwd() / avail_file_name).exists()):
+            print('** error ** available_cars_?.csv has already existed')
         else:
             csv_file = open(
-                self.base_path / 'stations_link.csv',
+                self.base_path / link_file_name,
                 'r',
                 encoding='utf-8'
             )
@@ -202,7 +207,7 @@ class Simulation():
                 avail_cars.append((datas[i][1], avail_car))
             self.write_matrix(
                 avail_cars,
-                self.base_path / 'available_cars.csv'
+                self.base_path / avail_file_name
             )
 
 
