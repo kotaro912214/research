@@ -31,21 +31,21 @@ class Simulation():
     self.KIND_OF_AIP = {'spot_list':'/spot/list?', 'category_list': '/category/list?', 'route': '/route?'}
     self.base_path = PureWindowsPath(Path.cwd())
 
-  def readSID(self):
+  def read_sid(self):
     sid_path = self.base_path / 'sid.txt'
     f = open(sid_path)
     SID = f.read()
     return SID
 
 
-  def makeRequest(self, api, params):
-    request = 'https://api-challenge.navitime.biz/v1s/' + self.readSID() + api
+  def make_request(self, api, params):
+    request = 'https://api-challenge.navitime.biz/v1s/' + self.read_sid() + api
     url_params = urllib.parse.urlencode(params)
     request += url_params
     return request
 
 
-  def getResponse(self, request):
+  def get_response(self, request):
     try:
       response = json.loads(urllib.request.urlopen(request).read())
     except urllib.error.HTTPError as e:
@@ -60,7 +60,7 @@ class Simulation():
       return response
 
 
-  def writeMatrix(self, matrix, path):
+  def write_matrix(self, matrix, path):
     try:
       file = open(path, 'x', encoding='utf-8')
     except FileExistsError:
@@ -72,7 +72,7 @@ class Simulation():
       file.close()
 
 
-  def writeConst(self):
+  def write_const(self):
     self.CONSTS = [
       ['NUMBER_OF_STATIONS', self.NUMBER_OF_STATIONS],
       ['NUMBER_OF_EMPLOYEES', self.NUMBER_OF_EMPLOYEES],
@@ -84,10 +84,10 @@ class Simulation():
       ['FUEL_CONSUMPTION', self.FUEL_CONSUMPTION],
       ['C_E_DAY', self.C_E_DAY],
     ]
-    self.writeMatrix(self.CONSTS, self.base_path / ('const_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
+    self.write_matrix(self.CONSTS, self.base_path / ('const_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
 
 
-  def makeScoord(self):
+  def make_stations_coord(self):
     file_name =  'S_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'
     if (not (Path.cwd() / file_name).exists()):
       # set the params for spot list request
@@ -99,8 +99,8 @@ class Simulation():
       params_spot['datum'] = 'tokyo'
 
       # get the data of the station list
-      request = self.makeRequest(self.KIND_OF_AIP['spot_list'], params_spot)
-      json_res = self.getResponse(request)
+      request = self.make_request(self.KIND_OF_AIP['spot_list'], params_spot)
+      json_res = self.get_response(request)
 
       spots = json_res['items']
       S_info = []
@@ -108,13 +108,13 @@ class Simulation():
       for spot in spots:
         S_coord.append((spot['coord']['lat'], spot['coord']['lon']))
         S_info.append([spot['name'], spot['coord']['lat'], spot['coord']['lon']])
-      self.writeMatrix(S_coord, self.base_path / ('S_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
-      self.writeMatrix(S_info, self.base_path / ('S_info_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
+      self.write_matrix(S_coord, self.base_path / ('S_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
+      self.write_matrix(S_info, self.base_path / ('S_info_' + str(self.NUMBER_OF_STATIONS) + '.csv'))
     else:
       print('** error **', Path.cwd() / 'S_coord_?.csv', 'has already existed')
 
 
-  def makeStationLinks(self):
+  def make_stations_links(self):
     if (not (Path.cwd() / 'station_links.csv').exists()):
       links = []
       for i in tqdm(range(1, 51), desc='scraping...'):
@@ -128,12 +128,12 @@ class Simulation():
         spot_names = soup.find_all(class_="spot_name")
         for spot_name in spot_names:
           links.append(['https:' + spot_name.a.get("href"), spot_name.a.string])
-      self.writeMatrix(links, self.base_path / 'station_links.csv')
+      self.write_matrix(links, self.base_path / 'station_links.csv')
     else:
       print('** error **', Path.cwd() / 'station_links.csv', 'has already existed')
 
   
-  def makeAvailableCars(self):
+  def make_available_cars(self):
     if (not (Path.cwd() / 'station_links.csv').exists()):
       print('** error ** there is no file about station links.')
     elif ((Path.cwd() / 'available_cars.csv').exists()):
@@ -149,7 +149,7 @@ class Simulation():
         soup = BeautifulSoup(html, "html.parser")
         avail_car = soup.find(class_="detail_contents").find_all("dd")[2].string[:-1]
         avail_cars.append((datas[i][1], avail_car))
-      self.writeMatrix(avail_cars, self.base_path / 'available_cars.csv')
+      self.write_matrix(avail_cars, self.base_path / 'available_cars.csv')
 
 
 

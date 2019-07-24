@@ -1,4 +1,4 @@
-from Simulation import Simulation
+from simulation import Simulation
 
 sim_5 = Simulation(params={
     'NUMBER_OF_EMPLOYEES': 4,
