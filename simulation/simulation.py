@@ -1,7 +1,7 @@
 from pathlib import Path, PureWindowsPath
 import csv
 import urllib.request
-import urllib.json
+import json
 import urllib.parse
 from tqdm import tqdm
 from bs4 import BeautifulSoup
@@ -20,26 +20,26 @@ class Simulation():
         'PRICE_PER_15': 205,
         'FUEL_CONSUMPTION': 35,
         'NUMBER_OF_STATIONS': 5
-    })
-    if (params['NUMBER_OF_STATIONS'] > 1000):
-        print('number of stations must be less than 1000')
-        print('so we use 1000 as the const.')
-        params['NUMBER_OF_STATIONS'] = 1000
-    self.NUMBER_OF_EMPLOYEES = params['NUMBER_OF_EMPLOYEES']
-    self.TIME = params['TIME']
-    self.C_IN = params['C_IN']
-    self.C_OUT = params['C_OUT']
-    self.C_E_FULL = params['C_E_FULL']
-    self.PRICE_PER_15 = params['PRICE_PER_15']
-    self.FUEL_CONSUMPTION = params['FUEL_CONSUMPTION']
-    self.NUMBER_OF_STATIONS = params['NUMBER_OF_STATIONS']
-    self.C_E_DAY = self.C_E_FULL * (self.TIME / 8 * 60)
-    self.KIND_OF_AIP = {
-        'spot_list': '/spot/list?',
-        'category_list': '/category/list?',
-        'route': '/route?'
-    }
-    self.base_path = PureWindowsPath(Path.cwd())
+    }):
+        if (params['NUMBER_OF_STATIONS'] > 1000):
+            print('number of stations must be less than 1000')
+            print('so we use 1000 as the const.')
+            params['NUMBER_OF_STATIONS'] = 1000
+        self.NUMBER_OF_EMPLOYEES = params['NUMBER_OF_EMPLOYEES']
+        self.TIME = params['TIME']
+        self.C_IN = params['C_IN']
+        self.C_OUT = params['C_OUT']
+        self.C_E_FULL = params['C_E_FULL']
+        self.PRICE_PER_15 = params['PRICE_PER_15']
+        self.FUEL_CONSUMPTION = params['FUEL_CONSUMPTION']
+        self.NUMBER_OF_STATIONS = params['NUMBER_OF_STATIONS']
+        self.C_E_DAY = self.C_E_FULL * (self.TIME / 8 * 60)
+        self.KIND_OF_AIP = {
+            'spot_list': '/spot/list?',
+            'category_list': '/category/list?',
+            'route': '/route?'
+        }
+        self.base_path = PureWindowsPath(Path.cwd())
 
     def read_sid(self):
         sid_path = self.base_path / 'sid.txt'
@@ -101,7 +101,7 @@ class Simulation():
             str(self.NUMBER_OF_STATIONS) + '.csv'
         info_file_name = 'stations_info_' + \
             str(self.NUMBER_OF_STATIONS) + '.csv'
-        if (not (Path.cwd() / file_name).exists()):
+        if (not (Path.cwd() / coord_file_name).exists()):
             # set the params for spot list request
             params_spot = {
                 'category': '',
@@ -157,8 +157,8 @@ class Simulation():
     def make_stations_link(self):
         file_name = 'stations_link_' + str(self.NUMBER_OF_STATIONS) + '.csv'
         if (not (Path.cwd() / file_name).exists()):
-            links = []
-            n = self.NUMBER_OF_STATIONS // 20
+            stations_links = []
+            n = 1 + self.NUMBER_OF_STATIONS // 20
             for i in tqdm(range(1, n + 1), desc='scraping...'):
                 url = 'https://www.navitime.co.jp/category/0817001002/13'
                 if (i != 1):
@@ -168,11 +168,14 @@ class Simulation():
                 soup = BeautifulSoup(html, "html.parser")
                 spot_names = soup.find_all(class_="spot_name")
                 for spot_name in spot_names:
-                    links.append([
+                    stations_links.append([
                         'https:' + spot_name.a.get("href"),
                         spot_name.a.string
                     ])
-            self.write_matrix(links, self.base_path / file_name)
+            self.write_matrix(
+                stations_links[:int(self.NUMBER_OF_STATIONS)],
+                self.base_path / file_name
+            )
         else:
             print(
                 '** error **',
