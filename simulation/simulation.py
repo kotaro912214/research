@@ -21,6 +21,10 @@ class Simulation():
         'FUEL_CONSUMPTION': 35,
         'NUMBER_OF_STATIONS': 5
     })
+    if (params['NUMBER_OF_STATIONS'] > 1000):
+        print('number of stations must be less than 1000')
+        print('so we use 1000 as the const.')
+        params['NUMBER_OF_STATIONS'] = 1000
     self.NUMBER_OF_EMPLOYEES = params['NUMBER_OF_EMPLOYEES']
     self.TIME = params['TIME']
     self.C_IN = params['C_IN']
@@ -93,7 +97,7 @@ class Simulation():
         )
 
     def make_stations_coord(self):
-        file_name = 'S_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'
+        file_name = 'stations_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv'
         if (not (Path.cwd() / file_name).exists()):
             # set the params for spot list request
             params_spot = {
@@ -119,35 +123,42 @@ class Simulation():
             json_res = self.get_response(request)
 
             spots = json_res['items']
-            S_info = []
-            S_coord = []
+            stations_info = []
+            stations_coord = []
             for spot in spots:
-                S_coord.append((spot['coord']['lat'], spot['coord']['lon']))
-                S_info.append([
+                stations_coord.append((
+                    spot['coord']['lat'],
+                    spot['coord']['lon']
+                ))
+                stations_info.append([
                     spot['name'],
                     spot['coord']['lat'],
                     spot['coord']['lon']
                 ])
             self.write_matrix(
-                S_coord,
+                stations_coord,
                 self.base_path /
-                ('S_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+                ('stations_coord_' + str(self.NUMBER_OF_STATIONS) + '.csv')
             )
             self.write_matrix(
-                S_info,
+                stations_info,
                 self.base_path /
-                ('S_info_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+                ('stations_info_' + str(self.NUMBER_OF_STATIONS) + '.csv')
             )
         else:
             print(
                 '** error **',
-                Path.cwd() / 'S_coord_?.csv', 'has already existed'
+                Path.cwd() / 'stations_coord_?.csv or',
+                Path.cwd() / 'stations_info_?.csv'
+                'has already existed'
             )
 
-    def make_stations_links(self):
-        if (not (Path.cwd() / 'station_links.csv').exists()):
+    def make_stations_link(self):
+        file_name = 'stations_link_' + str(self.NUMBER_OF_STATIONS) + '.csv'
+        if (not (Path.cwd() / file_name).exists()):
             links = []
-            for i in tqdm(range(1, 51), desc='scraping...'):
+            n = self.NUMBER_OF_STATIONS // 20
+            for i in tqdm(range(1, n + 1), desc='scraping...'):
                 url = 'https://www.navitime.co.jp/category/0817001002/13'
                 if (i != 1):
                     url += '?pages=' + str(i)
@@ -160,22 +171,22 @@ class Simulation():
                         'https:' + spot_name.a.get("href"),
                         spot_name.a.string
                     ])
-            self.write_matrix(links, self.base_path / 'station_links.csv')
+            self.write_matrix(links, self.base_path / file_name)
         else:
             print(
                 '** error **',
-                Path.cwd() / 'station_links.csv',
+                Path.cwd() / file_name,
                 'has already existed'
             )
 
     def make_available_cars(self):
-        if (not (Path.cwd() / 'station_links.csv').exists()):
+        if (not (Path.cwd() / 'stations_link.csv').exists()):
             print('** error ** there is no file about station links.')
         elif ((Path.cwd() / 'available_cars.csv').exists()):
             print('** error ** available_cars.csv has already existed')
         else:
             csv_file = open(
-                self.base_path / 'station_links.csv',
+                self.base_path / 'stations_link.csv',
                 'r',
                 encoding='utf-8'
             )

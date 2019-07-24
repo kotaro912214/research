@@ -12,5 +12,5 @@ sim_5 = Simulation(params={
         'NUMBER_OF_STATIONS': 10
     })
 sim_5.make_stations_coord()
-sim_5.make_stations_links()
+sim_5.make_stations_link()
 sim_5.make_available_cars()
