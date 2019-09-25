@@ -102,14 +102,12 @@ class Simulation():
             self.sub_dir_path / ('const_' + str(self.NUMBER_OF_STATIONS) + '.csv')
         )
 
-    def get_station_code_and_coords(self):
-        coord_file_name = 'station_coords_' + \
+    def make_stations_coord(self):
+        coord_file_name = 'stations_coord_' + \
             str(self.NUMBER_OF_STATIONS) + '.csv'
-        code_file_name = 'station_codes_' + \
+        info_file_name = 'stations_info_' + \
             str(self.NUMBER_OF_STATIONS) + '.csv'
-        coord_file_exist = (Path.cwd() / coord_file_name).exists()
-        code_file_exist = (Path.cwd() / code_file_name).exists()
-        if ((not coord_file_exist) and (not code_file_exist)):
+        if (not (Path.cwd() / coord_file_name).exists()):
             # set the params for spot list request
             params_spot = {
                 'category': '',
@@ -132,25 +130,33 @@ class Simulation():
                 params_spot
             )
             json_res = self.get_response(request)
+
             spots = json_res['items']
-            S_coords = []
-            S_codes = []
+            stations_info = []
+            stations_coord = []
             for spot in spots:
-                S_coords.append((spot['coord']['lon'], spot['coord']['lat']))
-                S_codes.append([spot])
+                stations_coord.append((
+                    spot['coord']['lat'],
+                    spot['coord']['lon']
+                ))
+                stations_info.append([
+                    spot['name'],
+                    spot['coord']['lat'],
+                    spot['coord']['lon']
+                ])
             self.write_matrix(
-                S_coords,
-                self.sub_dir_path / coord_file_name
+                stations_coord,
+                self.base_path / coord_file_name
             )
             self.write_matrix(
-                S_codes,
-                self.sub_dir_path / code_file_name
+                stations_info,
+                self.base_path / info_file_name
             )
         else:
             print(
                 '** error **',
-                self.sub_dir_path / 'stations_coords_?.csv or',
-                self.sub_dir_path / 'stations_codes_?.csv'
+                Path.cwd() / 'stations_coord_?.csv or',
+                Path.cwd() / 'stations_info_?.csv'
                 'has already existed'
             )
 
