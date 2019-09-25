@@ -23,7 +23,7 @@ class Simulation():
     }):
         if (params['NUMBER_OF_STATIONS'] > 1000):
             print('number of stations must be less than 1000')
-            print('so we use 1000 as the const.')
+            print('so we use 1000 as the NUMBER_OF_STATIONS.')
             params['NUMBER_OF_STATIONS'] = 1000
         self.NUMBER_OF_EMPLOYEES = params['NUMBER_OF_EMPLOYEES']
         self.TIME = params['TIME']

@@ -12,17 +12,17 @@ import csv
 
 # for this version there is no round method, so i define the method by myself
 def my_round(val, digit=0):
-  p = 10 ** digit
-  return int((val * p * 2 + 1) // 2 / p)
+    p = 10 ** digit
+    return int((val * p * 2 + 1) // 2 / p)
 
 
-#     data definition     #########################################################################
+#     data definition     #####################################################
 
 const_dic = {}
 with open('./const.csv', 'r') as f:
-  reader = csv.reader(f)
-  for row in reader:
-    const_dic[row[0]] = row[1]
+    reader = csv.reader(f)
+    for row in reader:
+        const_dic[row[0]] = row[1]
 NUMBER_OF_STATIONS = int(const_dic['NUMBER_OF_STATIONS'])
 FUEL_CONSUMPTION = int(const_dic['FUEL_CONSUMPTION'])
 
@@ -41,9 +41,9 @@ C_E = 10000 * (TIME / (8*60))
 
 S_coord = []
 with open('./s_coord.csv', 'r') as f:
-  reader = csv.reader(f)
-  for row in reader:
-    S_coord.append((row[0], row[1]))
+    reader = csv.reader(f)
+    for row in reader:
+        S_coord.append((row[0], row[1]))
 
 # define a set of the car stations
 S = list(range(NUMBER_OF_STATIONS))
@@ -66,23 +66,23 @@ price_per_min = price_per_distance * v_mean
 
 Distance = []
 with open('./distance.csv', 'r') as f:
-  reader = csv.reader(f)
-  for row in reader:
-    row = list(map(float, row))
-    Distance.append(row)
+    reader = csv.reader(f)
+    for row in reader:
+        row = list(map(float, row))
+        Distance.append(row)
 
 T_trans = []
 with open('./t_trans.csv', 'r') as f:
-  reader = csv.reader(f)
-  for row in reader:
-    row = list(map(int, list(map(float, row))))
-    T_trans.append(row)
+    reader = csv.reader(f)
+    for row in reader:
+        row = list(map(int, list(map(float, row))))
+        T_trans.append(row)
 
 # define the cost while transport from station i to station j
 C = [[0 for i in range(NUMBER_OF_STATIONS)] for j in range(NUMBER_OF_STATIONS)]
 for i in range(NUMBER_OF_STATIONS):
-  for j in range(NUMBER_OF_STATIONS):
-    C[i][j] = my_round(Distance[i][j] * price_per_min)
+    for j in range(NUMBER_OF_STATIONS):
+        C[i][j] = my_round(Distance[i][j] * price_per_min)
 
 # make the S x T nodes matrix a row vector
 SxT = [[(i, t) for t in T_step] for i in S]
@@ -95,39 +95,41 @@ A1 = [(V[i], V[i + 1]) for i in range(len(V) - 1)]
 # A2, moving activity arcs sets
 A2 = []
 for i in range(NUMBER_OF_STATIONS):
-  for j in range(i + 1, NUMBER_OF_STATIONS):
-    for t in T_step:
-      if (i != j and t + T_trans[i][j] < TIME):
-        A2.append((SxT[i][t], SxT[j][t + T_trans[i][j]]))
+    for j in range(i + 1, NUMBER_OF_STATIONS):
+        for t in T_step:
+            if (i != j and t + T_trans[i][j] < TIME):
+                A2.append((SxT[i][t], SxT[j][t + T_trans[i][j]]))
 
 # A3, relocation activity arcs sets
 A3 = []
 for i in range(NUMBER_OF_STATIONS):
-  for j in range(i + 1, NUMBER_OF_STATIONS):
-    for t in T_step:
-      if (i != j and t + T_trans[i][j] < TIME):
-        A3.append((SxT[i][t], SxT[j][t + T_trans[i][j]]))
+    for j in range(i + 1, NUMBER_OF_STATIONS):
+        for t in T_step:
+            if (i != j and t + T_trans[i][j] < TIME):
+                A3.append((SxT[i][t], SxT[j][t + T_trans[i][j]]))
 
 # define the demand matrix by random
-Demands = np.random.randint(-90, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
+Demands = np.random.randint(
+    -90, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS)
+)
 for t in T_step:
-  if (t == TIME - 1):
-    break
-  for i in S:
-    for j in S:
-      if (i == j or Demands[t][i][j] < 0):
-        Demands[t][i][j] = 0
+    if (t == TIME - 1):
+        break
+    for i in S:
+        for j in S:
+            if (i == j or Demands[t][i][j] < 0):
+                Demands[t][i][j] = 0
 
 # number of available cars at station i at time step t
 Av = np.zeros([NUMBER_OF_STATIONS, TIME])
 
 with open('./test_data/slots.csv', 'r') as f:
-  reader = csv.reader(f)
-  i = 0
-  for row in reader:
-    slot = int(row[-1])
-    Av[i][0] = slot
-    i += 1
+    reader = csv.reader(f)
+    i = 0
+    for row in reader:
+        slot = int(row[-1])
+        Av[i][0] = slot
+        i += 1
 print(Av)
 # initialize it at time step 0
 # for i in S:
@@ -136,50 +138,52 @@ print(Av)
 # number of parking slots in each station i
 P = np.array([NUMBER_OF_PARKING_SLOTS] * NUMBER_OF_STATIONS)
 
-##################################################################################################
+##############################################################################
 
 
 def main():
-  rde = 0
-  rdf = 0
-  cost = 0
-  success = 0
-  time_over = 0
-  for t in T_step:
-    if (t != TIME - 1):      
-      for i in S:
-        Av[i][t + 1] += Av[i][t]
-      for i in S:
-        for j in S:
-          if (i != j and Demands[t][i][j]):
-            if (t + T_trans[i][j] >= TIME):
-              time_over += 1
-            else:
-              if (Av[i][t] == 0):
-                rde += 1
-              elif (Av[j][t + T_trans[i][j]] == NUMBER_OF_PARKING_SLOTS - 1):
-                rdf += 1
-              else:
-                Av[j][t + T_trans[i][j]] += 1
-                Av[i][t + 1] -= 1
-                cost += C[i][j]
-                success += 1
-  path = './result_non_jocky.csv'
-  f = open(path, 'a')
-  f.write(str(sum(sum(sum(Demands)))) + ',')
-  f.write(str(rdf) + ',')
-  f.write(str(rde) + ',')
-  f.write(str(success) + ',')
-  f.write(str(time_over) + ',')
-  f.write(str(cost) + '\n')
-  f.close()
+    rde = 0
+    rdf = 0
+    cost = 0
+    success = 0
+    time_over = 0
+    for t in T_step:
+        if (t != TIME - 1):      
+            for i in S:
+                Av[i][t + 1] += Av[i][t]
+            for i in S:
+                for j in S:
+                    if (i != j and Demands[t][i][j]):
+                        if (t + T_trans[i][j] >= TIME):
+                            time_over += 1
+                    else:
+                        if (Av[i][t] == 0):
+                            rde += 1
+                        elif (
+                            Av[j][t + T_trans[i][j]] == NUMBER_OF_PARKING_SLOTS - 1
+                        ):
+                            rdf += 1
+                        else:
+                            Av[j][t + T_trans[i][j]] += 1
+                            Av[i][t + 1] -= 1
+                            cost += C[i][j]
+                            success += 1
+    path = './result_non_jocky.csv'
+    f = open(path, 'a')
+    f.write(str(sum(sum(sum(Demands)))) + ',')
+    f.write(str(rdf) + ',')
+    f.write(str(rde) + ',')
+    f.write(str(success) + ',')
+    f.write(str(time_over) + ',')
+    f.write(str(cost) + '\n')
+    f.close()
 
 
 if (__name__ == '__main__'):
-  start = time.time()
+    start = time.time()
 
-  # write some processing codes here
-  main()
+    # write some processing codes here
+    main()
 
-  elapsed_time = time.time() - start
-  print('実行時間: ', elapsed_time)
+    elapsed_time = time.time() - start
+    print('実行時間: ', elapsed_time)

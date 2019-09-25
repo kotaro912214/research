@@ -9,8 +9,8 @@ sim_5 = Simulation(params={
         'C_E_FULL': 10000,
         'PRICE_PER_15': 205,
         'FUEL_CONSUMPTION': 35,
-        'NUMBER_OF_STATIONS': 10
+        'NUMBER_OF_STATIONS': 5
     })
 sim_5.make_stations_coord()
-sim_5.make_stations_link()
-sim_5.make_available_cars()
+# sim_5.make_stations_link()
+# sim_5.make_available_cars()
