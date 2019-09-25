@@ -43,6 +43,9 @@
 <li>シミュレーションの実行</li>
 <li>結果の書き出し</li>
 </ol>
+<p>この流れをステーションなどに関する様々な条件下で行うため全体としての繰り返し処理が必要となる．
+だがそれでは冗長なコードとなってしまうため，Simulationクラスを定義し，条件やパラメータを引数として条件ごとのインスタンスを作成．
+インスタンスメソッドとしてシミュレーションを実行という形をとる．</p>
 </div>
 <div class="section" id="id3">
 <h2>1.2. 詳細な流れ<a class="headerlink" href="#id3" title="このヘッドラインへのパーマリンク">¶</a></h2>
@@ -54,40 +57,22 @@
 <li>ステーション<ul>
 <li>コード･･･ステーション識別のため</li>
 <li>緯度経度･･･APIで距離や移動時間を計算するため</li>
+<li>ステーションURL･･･APIでは得られない情報をスクレイピングで取得するため</li>
 <li>キャパシティ＝利用可能台数＝駐車可能台数･･･RDFやRDEを計算するため</li>
 <li>ステーション間の移動時間･･･移動コストのため</li>
 </ul>
 </li>
 </ul>
-<p>また，これらとは別に必要なパラメータは以下の通りである．</p>
-<ul class="simple">
-<li>パラメータ<ul>
-<li>ステーションの数</li>
-<li>試行時間･･･シミュレーションを実行する時間</li>
-<li>需要行列･･･いつ，どこから，どこへ，人が移動するかを表す行列</li>
-<li>人件費･･･再配置を行う従業員のコスト</li>
-<li>燃費･･･移動コストのため</li>
-<li>利用料金･･･利用可能時のコスト計算のため</li>
-</ul>
-</li>
-</ul>
-<p>ステーションの諸データについては一括でAPIで取得することができない．
-以下に詳細な取得手順を示す．</p>
-<ol class="arabic simple">
-<li>ある地点を中心とした円形エリア内に存在する <strong>ステーションの識別コードと緯度経度</strong> をAPIから取得する．</li>
-<li>エリア内に均等に分布するようそれらステーション一覧から，利用するステーションの数を基にしてランダムにステーションを抽出する．</li>
-<li>抽出されたステーションのキャパシティを取得するため識別コードを基にスクレイピングを実行する．</li>
-<li>これらのデータをデバッグ用にCSVエクスポート，シミュレーション用にインスタンス変数に格納する．</li>
-</ol>
-<p>ここまでの流れとプログラムを対応付けると以下のようになる．
-ただし，変数名に関しては以下のルールに従う．</p>
+<p>ただし，変数名に関しては以下のルールに従う．</p>
 <ul class="simple">
 <li>stationの接頭辞としてSを使用</li>
+<li>costの接頭辞としてCを使用</li>
 <li>大文字で始まる変数名は行列(二次元配列)</li>
 <li>定数はすべて大文字のスネークケース</li>
 </ul>
-<table border="1" class="colwidths-given docutils" id="id5">
-<caption><span class="caption-text">Stationデータ</span><a class="headerlink" href="#id5" title="このテーブルへのパーマリンク">¶</a></caption>
+<p>これらを考慮すると上記データの変数名および型は以下のようになる．</p>
+<table border="1" class="colwidths-given docutils" id="id6">
+<caption><span class="caption-text">Stationデータ</span><a class="headerlink" href="#id6" title="このテーブルへのパーマリンク">¶</a></caption>
 <colgroup>
 <col width="33%" />
 <col width="33%" />
@@ -108,19 +93,36 @@
 <td>S_coords</td>
 <td>[(float, float)]</td>
 </tr>
-<tr class="row-even"><td>キャパシティ</td>
+<tr class="row-even"><td>ステーションURL</td>
+<td>S_urls</td>
+<td>[str]</td>
+</tr>
+<tr class="row-odd"><td>キャパシティ</td>
 <td>S_capacities</td>
 <td>[int]</td>
 </tr>
-<tr class="row-odd"><td>移動時間</td>
+<tr class="row-even"><td>移動時間</td>
 <td>S_transitions</td>
 <td>[[float]]</td>
 </tr>
 </tbody>
 </table>
-<p>パラメータはプログラム内では定数(大文字)として扱うこととする．</p>
-<table border="1" class="colwidths-given docutils" id="id6">
-<caption><span class="caption-text">パラメータ</span><a class="headerlink" href="#id6" title="このテーブルへのパーマリンク">¶</a></caption>
+<p>また，これらとは別に必要なパラメータは以下の通りである．</p>
+<ul class="simple">
+<li>パラメータ<ul>
+<li>ステーションの数</li>
+<li>試行時間･･･シミュレーションを実行する時間</li>
+<li>需要行列･･･いつ，どこから，どこへ，人が移動するかを表す行列</li>
+<li>人件費･･･再配置を行う従業員のコスト</li>
+<li>燃費･･･移動コストのため</li>
+<li>利用料金･･･利用可能時のコスト計算のため</li>
+<li>従業員の総数･･･再配車を行う従業員の総数</li>
+</ul>
+</li>
+</ul>
+<p>同様に各種パラメータの変数名は以下のとおりである．</p>
+<table border="1" class="colwidths-given docutils" id="id7">
+<caption><span class="caption-text">パラメータ</span><a class="headerlink" href="#id7" title="このテーブルへのパーマリンク">¶</a></caption>
 <colgroup>
 <col width="30%" />
 <col width="70%" />
@@ -149,8 +151,88 @@
 <tr class="row-odd"><td>利用料金</td>
 <td>PRICE</td>
 </tr>
+<tr class="row-even"><td>従業員の総数</td>
+<td>NUMBER_OF_EMPLOYEE</td>
+</tr>
 </tbody>
 </table>
+<p>これらのデータを取得するためのメソッド名を以下に示す．</p>
+<table border="1" class="colwidths-given docutils" id="id8">
+<caption><span class="caption-text">各Stationデータ取得メソッド</span><a class="headerlink" href="#id8" title="このテーブルへのパーマリンク">¶</a></caption>
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">項目</th>
+<th class="head">メソッド名</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>識別コード</td>
+<td>get_station_codes</td>
+</tr>
+<tr class="row-odd"><td>緯度経度</td>
+<td>get_station_coords</td>
+</tr>
+<tr class="row-even"><td>ステーションURL</td>
+<td>get_station_urls</td>
+</tr>
+<tr class="row-odd"><td>キャパシティ</td>
+<td>get_station_capacities</td>
+</tr>
+<tr class="row-even"><td>移動時間</td>
+<td>get_station_transitions</td>
+</tr>
+</tbody>
+</table>
+<p>本来は上記メソッドに組み込まれていたが重複部分が存在するため，
+別に書き出されたメソッドは以下のとおりである．</p>
+<table border="1" class="colwidths-given docutils" id="id9">
+<caption><span class="caption-text">サブメソッド</span><a class="headerlink" href="#id9" title="このテーブルへのパーマリンク">¶</a></caption>
+<colgroup>
+<col width="30%" />
+<col width="70%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">項目</th>
+<th class="head">メソッド名</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>シークレットID取得</td>
+<td>read_sid</td>
+</tr>
+<tr class="row-odd"><td>APIリクエスト発行</td>
+<td>make_request</td>
+</tr>
+<tr class="row-even"><td>APIレスポンス受取</td>
+<td>get_response</td>
+</tr>
+<tr class="row-odd"><td>csv書き出し</td>
+<td>write_matrix</td>
+</tr>
+<tr class="row-even"><td>定数書き出し</td>
+<td>write_consts</td>
+</tr>
+</tbody>
+</table>
+<p>ステーションの諸データについては一括でAPIで取得することができない．
+以下に上記のメソッド群を使用した詳細な取得手順を示す．</p>
+<ol class="arabic simple">
+<li>ある地点を中心とした円形エリア内に存在する <strong>ステーションの識別コードと緯度経度</strong> をAPIから取得する．</li>
+<li>エリア内に均等に分布するようそれらステーション一覧から，利用するステーションの数を基にしてランダムにステーションを抽出する．</li>
+<li>抽出されたステーションのキャパシティを取得するため識別コードを基にスクレイピングを実行する．</li>
+<li>これらのデータをデバッグ用にCSVエクスポート，シミュレーション用にインスタンス変数に格納する．</li>
+</ol>
+<p>これらの処理を図で表すと以下のようになる．</p>
+<a class="reference internal image-reference" href="_images/get_datas_flow.png"><img alt="_images/get_datas_flow.png" class="align-center" src="_images/get_datas_flow.png" style="width: 500px;" /></a>
+</div>
+<div class="section" id="id5">
+<h3>1.2.2. シミュレーションの実行<a class="headerlink" href="#id5" title="このヘッドラインへのパーマリンク">¶</a></h3>
+<ol class="arabic simple">
+<li>与えられたステーションデータ</li>
+</ol>
 </div>
 </div>
 </div>
