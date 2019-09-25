@@ -1,11 +1,13 @@
 from pathlib import Path, PureWindowsPath
 import csv
 import urllib.request
-import json
 import urllib.parse
+import json
+import time
+
 from tqdm import tqdm
 from bs4 import BeautifulSoup
-import time
+
 from myfunc import my_round
 
 
@@ -19,7 +21,8 @@ class Simulation():
         'C_E_FULL': 10000,
         'PRICE_PER_15': 205,
         'FUEL_CONSUMPTION': 35,
-        'NUMBER_OF_STATIONS': 5
+        'NUMBER_OF_STATIONS': 5,
+        'CONFIG_NAME': 'default'
     }):
         if (params['NUMBER_OF_STATIONS'] > 1000):
             print('number of stations must be less than 1000')
@@ -39,7 +42,10 @@ class Simulation():
             'category_list': '/category/list?',
             'route': '/route?'
         }
+        self.CONFIG_NAME = params['CONFIG_NAME']
         self.base_path = PureWindowsPath(Path.cwd())
+        self.sub_dir = self.base_path / self.CONFIG_NAME
+        Path(self.base_path / self.CONFIG_NAME).mkdir()
 
     def read_sid(self):
         sid_path = self.base_path / 'sid.txt'
