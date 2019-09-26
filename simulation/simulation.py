@@ -45,7 +45,12 @@ class Simulation():
         self.CONFIG_NAME = params['CONFIG_NAME']
         self.base_path = PureWindowsPath(Path.cwd())
         self.sub_dir_path = self.base_path / self.CONFIG_NAME
-        Path(self.base_path / self.CONFIG_NAME).mkdir()
+        if (not Path(self.sub_dir_path).exists()):
+            Path(self.sub_dir_path).mkdir()
+            print("make sub directory")
+        else:
+            print(self.sub_dir_path.name, 'has already existed')
+            print('we alternatively use the directory')
 
     def read_sid(self):
         sid_path = self.base_path / 'sid.txt'
@@ -82,10 +87,25 @@ class Simulation():
         else:
             writer = csv.writer(file, lineterminator='\n')
             desc = 'making ' + path.name
-            writer.writerows(tqdm(matrix, desc=desc))
+            if (type(matrix[0]) == list):
+                writer.writerows(tqdm(matrix, desc=desc))
+            else:
+                writer.writerow(tqdm(matrix, desc=desc))
             file.close()
 
+    def read_matrix(self, path):
+        matrix = []
+        with open(path, 'r') as f:
+            reader = csv.reader(f)
+            for row in reader:
+                matrix.append(row)
+            if (len(matrix) == 1):
+                return matrix[0]
+            else:
+                return matrix
+
     def write_consts(self):
+        file_name = 'const_' + str(self.NUMBER_OF_STATIONS) + '.csv'
         self.CONSTS = [
             ['NUMBER_OF_STATIONS', self.NUMBER_OF_STATIONS],
             ['NUMBER_OF_EMPLOYEES', self.NUMBER_OF_EMPLOYEES],
@@ -99,16 +119,16 @@ class Simulation():
         ]
         self.write_matrix(
             self.CONSTS,
-            self.sub_dir_path / ('const_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+            self.sub_dir_path / file_name
         )
 
-    def get_station_code_and_coords(self):
+    def get_station_codes_and_coords(self):
         coord_file_name = 'station_coords_' + \
             str(self.NUMBER_OF_STATIONS) + '.csv'
         code_file_name = 'station_codes_' + \
             str(self.NUMBER_OF_STATIONS) + '.csv'
-        coord_file_exist = (Path.cwd() / coord_file_name).exists()
-        code_file_exist = (Path.cwd() / code_file_name).exists()
+        coord_file_exist = Path(self.sub_dir_path / coord_file_name).exists()
+        code_file_exist = Path(self.sub_dir_path / code_file_name).exists()
         if ((not coord_file_exist) and (not code_file_exist)):
             # set the params for spot list request
             params_spot = {
@@ -136,8 +156,10 @@ class Simulation():
             S_coords = []
             S_codes = []
             for spot in spots:
-                S_coords.append((spot['coord']['lon'], spot['coord']['lat']))
-                S_codes.append([spot])
+                S_coords.append([spot['coord']['lon'], spot['coord']['lat']])
+                # write_matrixが二次元配列に対してのみ対応するため，
+                # 一つの値のみの要素でもリストにする必要がある．
+                S_codes.append(spot['code'].replace('-', '.'))
             self.write_matrix(
                 S_coords,
                 self.sub_dir_path / coord_file_name
@@ -149,38 +171,36 @@ class Simulation():
         else:
             print(
                 '** error **',
-                self.sub_dir_path / 'stations_coords_?.csv or',
-                self.sub_dir_path / 'stations_codes_?.csv'
+                self.sub_dir_path / 'station_coords_?.csv or',
+                self.sub_dir_path / 'station_codes_?.csv',
                 'has already existed'
             )
 
-    def make_stations_link(self):
-        file_name = 'stations_link_' + str(self.NUMBER_OF_STATIONS) + '.csv'
-        if (not (Path.cwd() / file_name).exists()):
-            stations_links = []
-            n = 1 + self.NUMBER_OF_STATIONS // 20
-            for i in tqdm(range(1, n + 1), desc='scraping...'):
-                url = 'https://www.navitime.co.jp/category/0817001002/13'
-                if (i != 1):
-                    url += '?pages=' + str(i)
+    def get_station_urls(self):
+        url_file_name = 'station_urls_' + \
+            str(self.NUMBER_OF_STATIONS) + '.csv'
+        url_file_exist = Path(self.sub_dir_path / url_file_name).exists()
+        code_file_name = 'station_codes_' + \
+            str(self.NUMBER_OF_STATIONS) + '.csv'
+        code_file_exist = Path(self.sub_dir_path / code_file_name).exists()
+        if ((not url_file_exist) and code_file_exist):
+            S_codes = self.read_matrix(self.sub_dir_path / code_file_name)
+            S_urls = []
+            base_url = "https://navitime.co.jp/poi?spt="
+            for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='making urls...'):
                 time.sleep(1)
-                html = urllib.request.urlopen(url)
-                soup = BeautifulSoup(html, "html.parser")
-                spot_names = soup.find_all(class_="spot_name")
-                for spot_name in spot_names:
-                    stations_links.append([
-                        'https:' + spot_name.a.get("href"),
-                        spot_name.a.string
-                    ])
+                url = base_url + S_codes[i]
+                S_urls.append(url)
+            print(S_urls)
             self.write_matrix(
-                stations_links[:int(self.NUMBER_OF_STATIONS)],
-                self.base_path / file_name
+                S_urls,
+                self.sub_dir_path / url_file_name
             )
         else:
             print(
-                '** error **',
-                Path.cwd() / file_name,
-                'has already existed'
+                '** error **', self.sub_dir_path / url_file_name,
+                'has already existed or',
+                self.sub_dir_path / code_file_name, 'has not got yet'
             )
 
     def make_available_cars(self):
