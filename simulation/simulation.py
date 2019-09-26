@@ -203,34 +203,32 @@ class Simulation():
                 self.sub_dir_path / code_file_name, 'has not got yet'
             )
 
-    def make_available_cars(self):
-        link_file_name = 'stations_link_' + \
+    def get_station_capacities(self):
+        url_file_name = 'station_urls_' + \
             str(self.NUMBER_OF_STATIONS) + '.csv'
-        avail_file_name = 'available_cars_' + \
+        capa_file_name = 'station_capacities_' + \
             str(self.NUMBER_OF_STATIONS) + '.csv'
-        if (not (Path.cwd() / link_file_name).exists()):
-            print('** error ** there is no file about station links.')
-        elif ((Path.cwd() / avail_file_name).exists()):
-            print('** error ** available_cars_?.csv has already existed')
+        url_file_exist = Path(self.sub_dir_path / url_file_name).exists()
+        capa_file_exist = Path(self.sub_dir_path / capa_file_name).exists()
+        if (not url_file_exist):
+            print('** error ** there is no file about station urls.')
+        elif (capa_file_exist):
+            print('** error ** station_capacities_?.csv has already existed')
         else:
-            csv_file = open(
-                self.base_path / link_file_name,
-                'r',
-                encoding='utf-8'
-            )
-            datas = list(csv.reader(csv_file, delimiter=","))
-            avail_cars = []
-            for i in tqdm(range(len(datas)), desc='scraiping...'):
-                url = datas[i][0]
+            S_urls = self.read_matrix(self.sub_dir_path / url_file_name)
+            S_capacities = []
+            for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='scraiping...'):
+                url = S_urls[i]
                 time.sleep(1)
                 html = urllib.request.urlopen(url)
                 soup = BeautifulSoup(html, "html.parser")
+
                 detail_contents = soup.find(class_="detail_contents")
                 avail_car = detail_contents.find_all("dd")[2].string[:-1]
-                avail_cars.append((datas[i][1], avail_car))
+                S_capacities.append(avail_car)
             self.write_matrix(
-                avail_cars,
-                self.base_path / avail_file_name
+                S_capacities,
+                self.sub_dir_path / capa_file_name
             )
 
 

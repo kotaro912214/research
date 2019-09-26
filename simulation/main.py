@@ -11,6 +11,7 @@ sim_5 = Simulation(params={
     'NUMBER_OF_STATIONS': 5,
     'CONFIG_NAME': 'test_5'
 })
-sim_5.get_station_codes_and_coords()
-sim_5.get_station_urls()
-# sim_5.make_available_cars()
+# sim_5.get_station_codes_and_coords()
+# sim_5.get_station_urls()
+# sim_5.get_station_capacities()
+sim_5.get_station_transitions()
