@@ -37,7 +37,7 @@ C_IN = 100
 # cost of rejecting a client demand for taking a car from a station
 C_OUT = 250
 # cost of using one one staff during the day
-C_E = 10000 * (TIME / (8*60))
+C_E = 10000 * (TIME / (8 * 60))
 
 S_coord = []
 with open('./s_coord.csv', 'r') as f:
@@ -148,7 +148,7 @@ def main():
     success = 0
     time_over = 0
     for t in T_step:
-        if (t != TIME - 1):      
+        if (t != TIME - 1):
             for i in S:
                 Av[i][t + 1] += Av[i][t]
             for i in S:
@@ -156,27 +156,27 @@ def main():
                     if (i != j and Demands[t][i][j]):
                         if (t + T_trans[i][j] >= TIME):
                             time_over += 1
-                    else:
-                        if (Av[i][t] == 0):
-                            rde += 1
-                        elif (
-                            Av[j][t + T_trans[i][j]] == NUMBER_OF_PARKING_SLOTS - 1
-                        ):
-                            rdf += 1
                         else:
-                            Av[j][t + T_trans[i][j]] += 1
-                            Av[i][t + 1] -= 1
-                            cost += C[i][j]
-                            success += 1
-    path = './result_non_jocky.csv'
-    f = open(path, 'a')
-    f.write(str(sum(sum(sum(Demands)))) + ',')
-    f.write(str(rdf) + ',')
-    f.write(str(rde) + ',')
-    f.write(str(success) + ',')
-    f.write(str(time_over) + ',')
-    f.write(str(cost) + '\n')
-    f.close()
+                            if (Av[i][t] == 0):
+                                rde += 1
+                            elif (
+                                Av[j][t + T_trans[i][j]] == NUMBER_OF_PARKING_SLOTS - 1
+                            ):
+                                rdf += 1
+                            else:
+                                Av[j][t + T_trans[i][j]] += 1
+                                Av[i][t + 1] -= 1
+                                cost += C[i][j]
+                                success += 1
+        path = './result_non_jocky.csv'
+        f = open(path, 'a')
+        f.write(str(sum(sum(sum(Demands)))) + ',')
+        f.write(str(rdf) + ',')
+        f.write(str(rde) + ',')
+        f.write(str(success) + ',')
+        f.write(str(time_over) + ',')
+        f.write(str(cost) + '\n')
+        f.close()
 
 
 if (__name__ == '__main__'):

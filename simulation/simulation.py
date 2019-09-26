@@ -222,6 +222,15 @@ class Simulation():
             self.travel_file_path
         )
 
+    def get_station_vhecles(self):
+        S_vhecles = []
+        for capa in self.S_capacities:
+            S_vhecles.append(int(capa) - 1)
+        self.write_matrix(
+            S_vhecles,
+            self.vhecle_file_path
+        )
+
     def is_file_exist(self, file_path):
         return Path(file_path).exists()
 
@@ -231,6 +240,7 @@ class Simulation():
         self.url_file_path = self.sub_dir_path / ('station_urls_' + str(self.NUMBER_OF_STATIONS) + '.csv')
         self.capa_file_path = self.sub_dir_path / ('station_capacities_' + str(self.NUMBER_OF_STATIONS) + '.csv')
         self.travel_file_path = self.sub_dir_path / ('station_traveltimes_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+        self.vhecle_file_path = self.sub_dir_path / ('station_vhecles_' + str(self.NUMBER_OF_STATIONS) + '.csv')
 
         if (self.is_file_exist(self.code_file_path) and self.is_file_exist(self.coord_file_path)):
             self.S_codes = self.read_matrix(self.code_file_path)
@@ -257,8 +267,59 @@ class Simulation():
             self.get_station_traveltimes()
             self.get_all_datas()
 
+        if (self.is_file_exist(self.vhecle_file_path)):
+            self.S_vhecles = self.read_matrix(self.vhecle_file_path)
+        else:
+            self.get_station_vhecles()
+            self.get_all_datas()
+
     def excute(self):
-        print('a')
+        available_vhecles = []
+        S = list(range(NUMBER_OF_STATIONS))
+        T_step = np.array(list(range(TIME)))
+        E = list(range(NUMBER_OF_EMPLOYEES))
+        price_per_L = 136.3
+        distance_per_L = 35000
+        price_per_distance = price_per_L / distance_per_L
+        # v[m/min]
+        v_mean = 25000 / 60
+        price_per_min = price_per_distance * v_mean
+
+        rde = 0
+        rdf = 0
+        cost = 0
+        success = 0
+        time_over = 0
+        for t in T_step:
+            if (t != TIME - 1):
+                for i in S:
+                    Av[i][t + 1] += Av[i][t]
+                for i in S:
+                    for j in S:
+                        if (i != j and Demands[t][i][j]):
+                            if (t + T_trans[i][j] >= TIME):
+                                time_over += 1
+                            else:
+                                if (Av[i][t] == 0):
+                                    rde += 1
+                                elif (
+                                    Av[j][t + T_trans[i][j]] == NUMBER_OF_PARKING_SLOTS - 1
+                                ):
+                                    rdf += 1
+                                else:
+                                    Av[j][t + T_trans[i][j]] += 1
+                                    Av[i][t + 1] -= 1
+                                    cost += C[i][j]
+                                    success += 1
+            path = './result_non_jocky.csv'
+            f = open(path, 'a')
+            f.write(str(sum(sum(sum(Demands)))) + ',')
+            f.write(str(rdf) + ',')
+            f.write(str(rde) + ',')
+            f.write(str(success) + ',')
+            f.write(str(time_over) + ',')
+            f.write(str(cost) + '\n')
+            f.close()
 
 
 if (__name__ == '__main__'):
