@@ -7,6 +7,7 @@ import time
 
 from tqdm import tqdm
 from bs4 import BeautifulSoup
+import numpy as np
 
 from myfunc import my_round
 
@@ -80,18 +81,16 @@ class Simulation():
             return response
 
     def write_matrix(self, matrix, path):
-        try:
-            file = open(path, 'x', encoding='utf-8')
-        except FileExistsError:
-            print(path, ' has already made')
+        file = open(path, 'x', encoding='utf-8')
+        writer = csv.writer(file, lineterminator='\n')
+        desc = 'making ' + path.name
+        print(type(matrix[0]))
+        # print(matrix)
+        if (type(matrix[0]) == list or type(matrix[0]) == np.ndarray):
+            writer.writerows(tqdm(matrix, desc=desc))
         else:
-            writer = csv.writer(file, lineterminator='\n')
-            desc = 'making ' + path.name
-            if (type(matrix[0]) == list):
-                writer.writerows(tqdm(matrix, desc=desc))
-            else:
-                writer.writerow(tqdm(matrix, desc=desc))
-            file.close()
+            writer.writerow(tqdm(matrix, desc=desc))
+        file.close()
 
     def read_matrix(self, path):
         matrix = []
@@ -105,7 +104,7 @@ class Simulation():
                 return matrix
 
     def write_consts(self):
-        file_name = 'const_' + str(self.NUMBER_OF_STATIONS) + '.csv'
+        const_file_path = self.sub_dir_path / ('const_' + str(self.NUMBER_OF_STATIONS) + '.csv')
         self.CONSTS = [
             ['NUMBER_OF_STATIONS', self.NUMBER_OF_STATIONS],
             ['NUMBER_OF_EMPLOYEES', self.NUMBER_OF_EMPLOYEES],
@@ -119,17 +118,10 @@ class Simulation():
         ]
         self.write_matrix(
             self.CONSTS,
-            self.sub_dir_path / file_name
+            const_file_path
         )
 
     def get_station_codes_and_coords(self):
-        coord_file_name = 'station_coords_' + \
-            str(self.NUMBER_OF_STATIONS) + '.csv'
-        code_file_name = 'station_codes_' + \
-            str(self.NUMBER_OF_STATIONS) + '.csv'
-        coord_file_exist = Path(self.sub_dir_path / coord_file_name).exists()
-        code_file_exist = Path(self.sub_dir_path / code_file_name).exists()
-        if ((not coord_file_exist) and (not code_file_exist)):
             # set the params for spot list request
             params_spot = {
                 'category': '',
@@ -145,7 +137,6 @@ class Simulation():
             params_spot['radius'] = '100000'
             params_spot['limit'] = str(self.NUMBER_OF_STATIONS)
             params_spot['datum'] = 'tokyo'
-
             # get the data of the station list
             request = self.make_request(
                 self.KIND_OF_AIP['spot_list'],
@@ -153,83 +144,120 @@ class Simulation():
             )
             json_res = self.get_response(request)
             spots = json_res['items']
-            S_coords = []
+            self.S_coordss = []
             S_codes = []
             for spot in spots:
-                S_coords.append([spot['coord']['lon'], spot['coord']['lat']])
+                self.S_coordss.append([spot['coord']['lon'], spot['coord']['lat']])
                 # write_matrixが二次元配列に対してのみ対応するため，
                 # 一つの値のみの要素でもリストにする必要がある．
                 S_codes.append(spot['code'].replace('-', '.'))
             self.write_matrix(
-                S_coords,
-                self.sub_dir_path / coord_file_name
+                self.S_coordss,
+                self.coord_file_path
             )
             self.write_matrix(
                 S_codes,
-                self.sub_dir_path / code_file_name
-            )
-        else:
-            print(
-                '** error **',
-                self.sub_dir_path / 'station_coords_?.csv or',
-                self.sub_dir_path / 'station_codes_?.csv',
-                'has already existed'
+                self.code_file_path
             )
 
     def get_station_urls(self):
-        url_file_name = 'station_urls_' + \
-            str(self.NUMBER_OF_STATIONS) + '.csv'
-        url_file_exist = Path(self.sub_dir_path / url_file_name).exists()
-        code_file_name = 'station_codes_' + \
-            str(self.NUMBER_OF_STATIONS) + '.csv'
-        code_file_exist = Path(self.sub_dir_path / code_file_name).exists()
-        if ((not url_file_exist) and code_file_exist):
-            S_codes = self.read_matrix(self.sub_dir_path / code_file_name)
-            S_urls = []
-            base_url = "https://navitime.co.jp/poi?spt="
-            for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='making urls...'):
-                time.sleep(1)
-                url = base_url + S_codes[i]
-                S_urls.append(url)
-            print(S_urls)
-            self.write_matrix(
-                S_urls,
-                self.sub_dir_path / url_file_name
-            )
-        else:
-            print(
-                '** error **', self.sub_dir_path / url_file_name,
-                'has already existed or',
-                self.sub_dir_path / code_file_name, 'has not got yet'
-            )
+        S_urls = []
+        base_url = "https://navitime.co.jp/poi?spt="
+        for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='making urls...'):
+            time.sleep(1)
+            url = base_url + self.S_codes[i]
+            S_urls.append(url)
+        print(S_urls)
+        self.write_matrix(
+            S_urls,
+            self.url_file_path
+        )
 
     def get_station_capacities(self):
-        url_file_name = 'station_urls_' + \
-            str(self.NUMBER_OF_STATIONS) + '.csv'
-        capa_file_name = 'station_capacities_' + \
-            str(self.NUMBER_OF_STATIONS) + '.csv'
-        url_file_exist = Path(self.sub_dir_path / url_file_name).exists()
-        capa_file_exist = Path(self.sub_dir_path / capa_file_name).exists()
-        if (not url_file_exist):
-            print('** error ** there is no file about station urls.')
-        elif (capa_file_exist):
-            print('** error ** station_capacities_?.csv has already existed')
-        else:
-            S_urls = self.read_matrix(self.sub_dir_path / url_file_name)
-            S_capacities = []
-            for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='scraiping...'):
-                url = S_urls[i]
-                time.sleep(1)
-                html = urllib.request.urlopen(url)
-                soup = BeautifulSoup(html, "html.parser")
+        S_capacities = []
+        for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='scraiping...'):
+            url = self.S_urls[i]
+            time.sleep(1)
+            html = urllib.request.urlopen(url)
+            soup = BeautifulSoup(html, "html.parser")
+            detail_contents = soup.find(class_="detail_contents")
+            avail_car = detail_contents.find_all("dd")[2].string[:-1]
+            S_capacities.append(avail_car)
+        self.write_matrix(
+            S_capacities,
+            self.capa_file_path
+        )
 
-                detail_contents = soup.find(class_="detail_contents")
-                avail_car = detail_contents.find_all("dd")[2].string[:-1]
-                S_capacities.append(avail_car)
-            self.write_matrix(
-                S_capacities,
-                self.sub_dir_path / capa_file_name
-            )
+    def get_station_traveltimes(self):
+        params_route = {
+            'car': '',
+            'start': '',
+            'goal': '',
+            'order': '',
+            'car-fuel': ''
+        }
+        params_route['car'] = 'only'
+        params_route['order'] = 'total_distance'
+        params_route['car-fuel'] = str(self.FUEL_CONSUMPTION)
+
+        # Distance = np.zeros((NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
+        S_traveltimes = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+        for i in range(self.NUMBER_OF_STATIONS - 1):
+            for j in range(i + 1, self.NUMBER_OF_STATIONS):
+                time.sleep(1)
+                if (self.S_coords[i] != self.S_coords[j]):
+                    params_route['start'] = str(self.S_coords[i][1]) + ',' + str(self.S_coords[i][0])
+                    params_route['goal'] = str(self.S_coords[j][1]) + ',' + str(self.S_coords[j][0])
+                    time.sleep(0.65)
+                    request = self.make_request(self.KIND_OF_AIP['route'], params_route)
+                    print(request)
+                    response = self.get_response(request)
+                    # Distance[i][j] = response['items'][0]['summary']['move']['distance']
+                    # Distance[j][i] = response['items'][0]['summary']['move']['distance']
+                    S_traveltimes[i][j] = response['items'][0]['summary']['move']['time']
+                    S_traveltimes[j][i] = response['items'][0]['summary']['move']['time']
+                else:
+                    # Distance[i][j] = 0
+                    S_traveltimes[i][j] = 0
+        self.write_matrix(S_traveltimes, self.travel_file_path)
+
+    def is_file_exist(self, file_path):
+        return Path(file_path).exists()
+
+    def get_all_datas(self):
+        self.code_file_path = self.sub_dir_path / ('station_codes_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+        self.coord_file_path = self.sub_dir_path / ('station_coords_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+        self.url_file_path = self.sub_dir_path / ('station_urls_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+        self.capa_file_path = self.sub_dir_path / ('station_capacities_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+        self.travel_file_path = self.sub_dir_path / ('station_traveltimes_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+
+        if (self.is_file_exist(self.code_file_path) and self.is_file_exist(self.coord_file_path)):
+            self.S_codes = self.read_matrix(self.code_file_path)
+            self.S_coords = self.read_matrix(self.coord_file_path)
+        else:
+            self.get_station_codes_and_coords()
+            self.get_all_datas()
+
+        if (self.is_file_exist(self.url_file_path)):
+            self.S_urls = self.read_matrix(self.url_file_path)
+        else:
+            self.get_station_urls()
+            self.get_all_datas()
+
+        if (self.is_file_exist(self.capa_file_path)):
+            self.S_capacities = self.read_matrix(self.capa_file_path)
+        else:
+            self.get_station_capacities()
+            self.get_all_datas()
+
+        if (self.is_file_exist(self.travel_file_path)):
+            self.S_traveltimes = self.read_matrix(self.travel_file_path)
+        else:
+            self.get_station_traveltimes()
+            self.get_all_datas()
+
+    def excute(self):
+        print('a')
 
 
 if (__name__ == '__main__'):

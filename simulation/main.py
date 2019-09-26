@@ -14,4 +14,4 @@ sim_5 = Simulation(params={
 # sim_5.get_station_codes_and_coords()
 # sim_5.get_station_urls()
 # sim_5.get_station_capacities()
-sim_5.get_station_transitions()
+sim_5.get_all_datas()
