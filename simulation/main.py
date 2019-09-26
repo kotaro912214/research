@@ -8,10 +8,9 @@ sim_5 = Simulation(params={
     'C_E_FULL': 10000,
     'PRICE_PER_15': 205,
     'FUEL_CONSUMPTION': 35,
-    'NUMBER_OF_STATIONS': 5,
-    'CONFIG_NAME': 'test_5'
+    'NUMBER_OF_STATIONS': 3,
+    'SELECT_RATIO': 5,
+    'CONFIG_NAME': 'sim_5_nojockey'
 })
-# sim_5.get_station_codes_and_coords()
-# sim_5.get_station_urls()
-# sim_5.get_station_capacities()
+
 sim_5.get_all_datas()

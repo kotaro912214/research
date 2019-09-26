@@ -23,12 +23,13 @@ class Simulation():
         'PRICE_PER_15': 205,
         'FUEL_CONSUMPTION': 35,
         'NUMBER_OF_STATIONS': 5,
+        'SELECT_RATIO': 2,
         'CONFIG_NAME': 'default'
     }):
-        if (params['NUMBER_OF_STATIONS'] > 1000):
+        if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')
             print('so we use 1000 as the NUMBER_OF_STATIONS.')
-            params['NUMBER_OF_STATIONS'] = 1000
+            params['NUMBER_OF_STATIONS'] = 1000 // params['SELECT_RATIO']
         self.NUMBER_OF_EMPLOYEES = params['NUMBER_OF_EMPLOYEES']
         self.TIME = params['TIME']
         self.C_IN = params['C_IN']
@@ -38,14 +39,14 @@ class Simulation():
         self.FUEL_CONSUMPTION = params['FUEL_CONSUMPTION']
         self.NUMBER_OF_STATIONS = params['NUMBER_OF_STATIONS']
         self.C_E_DAY = self.C_E_FULL * (self.TIME / 8 * 60)
+        self.SELECT_RATIO = params['SELECT_RATIO']
         self.KIND_OF_AIP = {
             'spot_list': '/spot/list?',
             'category_list': '/category/list?',
             'route': '/route?'
         }
-        self.CONFIG_NAME = params['CONFIG_NAME']
         self.base_path = PureWindowsPath(Path.cwd())
-        self.sub_dir_path = self.base_path / self.CONFIG_NAME
+        self.sub_dir_path = self.base_path / params['CONFIG_NAME']
         if (not Path(self.sub_dir_path).exists()):
             Path(self.sub_dir_path).mkdir()
             print("make sub directory")
@@ -84,8 +85,6 @@ class Simulation():
         file = open(path, 'x', encoding='utf-8')
         writer = csv.writer(file, lineterminator='\n')
         desc = 'making ' + path.name
-        print(type(matrix[0]))
-        # print(matrix)
         if (type(matrix[0]) == list or type(matrix[0]) == np.ndarray):
             writer.writerows(tqdm(matrix, desc=desc))
         else:
@@ -135,7 +134,7 @@ class Simulation():
             # a coord of shinjuku station
             params_spot['coord'] = '35.689296,139.702089'
             params_spot['radius'] = '100000'
-            params_spot['limit'] = str(self.NUMBER_OF_STATIONS)
+            params_spot['limit'] = str(self.NUMBER_OF_STATIONS * self.SELECT_RATIO)
             params_spot['datum'] = 'tokyo'
             # get the data of the station list
             request = self.make_request(
@@ -144,15 +143,16 @@ class Simulation():
             )
             json_res = self.get_response(request)
             spots = json_res['items']
-            self.S_coordss = []
+            S_coords = []
             S_codes = []
+            i = 1
             for spot in spots:
-                self.S_coordss.append([spot['coord']['lon'], spot['coord']['lat']])
-                # write_matrixが二次元配列に対してのみ対応するため，
-                # 一つの値のみの要素でもリストにする必要がある．
-                S_codes.append(spot['code'].replace('-', '.'))
+                if (i % self.SELECT_RATIO == 0):
+                    S_coords.append([spot['coord']['lon'], spot['coord']['lat']])
+                    S_codes.append(spot['code'].replace('-', '.'))
+                i += 1
             self.write_matrix(
-                self.S_coordss,
+                S_coords,
                 self.coord_file_path
             )
             self.write_matrix(
@@ -167,7 +167,6 @@ class Simulation():
             time.sleep(1)
             url = base_url + self.S_codes[i]
             S_urls.append(url)
-        print(S_urls)
         self.write_matrix(
             S_urls,
             self.url_file_path
@@ -210,7 +209,6 @@ class Simulation():
                     params_route['goal'] = str(self.S_coords[j][1]) + ',' + str(self.S_coords[j][0])
                     time.sleep(0.65)
                     request = self.make_request(self.KIND_OF_AIP['route'], params_route)
-                    print(request)
                     response = self.get_response(request)
                     # Distance[i][j] = response['items'][0]['summary']['move']['distance']
                     # Distance[j][i] = response['items'][0]['summary']['move']['distance']
@@ -219,7 +217,10 @@ class Simulation():
                 else:
                     # Distance[i][j] = 0
                     S_traveltimes[i][j] = 0
-        self.write_matrix(S_traveltimes, self.travel_file_path)
+        self.write_matrix(
+            S_traveltimes,
+            self.travel_file_path
+        )
 
     def is_file_exist(self, file_path):
         return Path(file_path).exists()
