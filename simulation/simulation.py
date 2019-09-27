@@ -267,20 +267,24 @@ class Simulation():
             self.get_all_datas()
 
         if (self.is_file_exist(self.capa_file_path)):
-            self.S_capacities = list(map(int, self.read_matrix(self.capa_file_path)))
+            self.S_capacities = self.read_matrix(self.capa_file_path)
+            self.S_capacities = list(map(int, self.S_capacities))
         else:
             self.get_station_capacities()
             self.get_all_datas()
 
         if (self.is_file_exist(self.travel_file_path) and self.is_file_exist(self.distance_file_path)):
-            self.S_traveltimes = self.change_into_int_2dmatrix(self.read_matrix(self.travel_file_path))
-            self.S_distances = self.change_into_int_2dmatrix(self.read_matrix(self.distance_file_path))
+            self.S_traveltimes = self.read_matrix(self.travel_file_path)
+            self.S_traveltimes = self.change_into_int_2dmatrix(self.S_traveltimes)
+            self.S_distances = self.read_matrix(self.distance_file_path)
+            self.S_distances = self.change_into_int_2dmatrix(self.S_distances)
         else:
             self.get_station_traveltimes_and_distances()
             self.get_all_datas()
 
         if (self.is_file_exist(self.vhecle_file_path)):
-            self.S_vhecles = list(map(int, self.read_matrix(self.vhecle_file_path)))
+            self.S_vhecles = self.read_matrix(self.vhecle_file_path)
+            self.S_vhecles = list(map(int, self.S_vhecles))
         else:
             self.get_station_vhecles()
             self.get_all_datas()
