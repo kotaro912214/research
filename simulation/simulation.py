@@ -81,6 +81,12 @@ class Simulation():
         else:
             return response
 
+    def change_into_int_2dmatrix(self, matrix):
+        for i in range(len(matrix)):
+                for j in range(len(matrix[0])):
+                    matrix[i][j] = int(my_round(float(matrix[i][j])))
+        return matrix
+
     def write_matrix(self, matrix, path):
         file = open(path, 'x', encoding='utf-8')
         writer = csv.writer(file, lineterminator='\n')
@@ -103,7 +109,7 @@ class Simulation():
                 return matrix
 
     def write_consts(self):
-        const_file_path = self.sub_dir_path / ('const_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+        const_file_path = self.sub_dir_path / ('const.csv')
         self.CONSTS = [
             ['NUMBER_OF_STATIONS', self.NUMBER_OF_STATIONS],
             ['NUMBER_OF_EMPLOYEES', self.NUMBER_OF_EMPLOYEES],
@@ -187,7 +193,7 @@ class Simulation():
             self.capa_file_path
         )
 
-    def get_station_traveltimes(self):
+    def get_station_traveltimes_and_distances(self):
         params_route = {
             'car': '',
             'start': '',
@@ -199,7 +205,7 @@ class Simulation():
         params_route['order'] = 'total_distance'
         params_route['car-fuel'] = str(self.FUEL_CONSUMPTION)
 
-        # Distance = np.zeros((NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
+        S_distances = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
         S_traveltimes = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
         for i in range(self.NUMBER_OF_STATIONS - 1):
             for j in range(i + 1, self.NUMBER_OF_STATIONS):
@@ -210,16 +216,20 @@ class Simulation():
                     time.sleep(0.65)
                     request = self.make_request(self.KIND_OF_AIP['route'], params_route)
                     response = self.get_response(request)
-                    # Distance[i][j] = response['items'][0]['summary']['move']['distance']
-                    # Distance[j][i] = response['items'][0]['summary']['move']['distance']
+                    S_distances[i][j] = response['items'][0]['summary']['move']['distance']
+                    S_distances[j][i] = response['items'][0]['summary']['move']['distance']
                     S_traveltimes[i][j] = response['items'][0]['summary']['move']['time']
                     S_traveltimes[j][i] = response['items'][0]['summary']['move']['time']
                 else:
-                    # Distance[i][j] = 0
+                    S_distances[i][j] = 0
                     S_traveltimes[i][j] = 0
         self.write_matrix(
             S_traveltimes,
             self.travel_file_path
+        )
+        self.write_matrix(
+            S_distances,
+            self.distance_file_path
         )
 
     def get_station_vhecles(self):
@@ -235,12 +245,13 @@ class Simulation():
         return Path(file_path).exists()
 
     def get_all_datas(self):
-        self.code_file_path = self.sub_dir_path / ('station_codes_' + str(self.NUMBER_OF_STATIONS) + '.csv')
-        self.coord_file_path = self.sub_dir_path / ('station_coords_' + str(self.NUMBER_OF_STATIONS) + '.csv')
-        self.url_file_path = self.sub_dir_path / ('station_urls_' + str(self.NUMBER_OF_STATIONS) + '.csv')
-        self.capa_file_path = self.sub_dir_path / ('station_capacities_' + str(self.NUMBER_OF_STATIONS) + '.csv')
-        self.travel_file_path = self.sub_dir_path / ('station_traveltimes_' + str(self.NUMBER_OF_STATIONS) + '.csv')
-        self.vhecle_file_path = self.sub_dir_path / ('station_vhecles_' + str(self.NUMBER_OF_STATIONS) + '.csv')
+        self.code_file_path = self.sub_dir_path / ('station_codes.csv')
+        self.coord_file_path = self.sub_dir_path / ('station_coords.csv')
+        self.url_file_path = self.sub_dir_path / ('station_urls.csv')
+        self.capa_file_path = self.sub_dir_path / ('station_capacities.csv')
+        self.travel_file_path = self.sub_dir_path / ('station_traveltimes.csv')
+        self.distance_file_path = self.sub_dir_path / ('station_distances.csv')
+        self.vhecle_file_path = self.sub_dir_path / ('station_vhecles.csv')
 
         if (self.is_file_exist(self.code_file_path) and self.is_file_exist(self.coord_file_path)):
             self.S_codes = self.read_matrix(self.code_file_path)
@@ -256,70 +267,81 @@ class Simulation():
             self.get_all_datas()
 
         if (self.is_file_exist(self.capa_file_path)):
-            self.S_capacities = self.read_matrix(self.capa_file_path)
+            self.S_capacities = list(map(int, self.read_matrix(self.capa_file_path)))
         else:
             self.get_station_capacities()
             self.get_all_datas()
 
-        if (self.is_file_exist(self.travel_file_path)):
-            self.S_traveltimes = self.read_matrix(self.travel_file_path)
+        if (self.is_file_exist(self.travel_file_path) and self.is_file_exist(self.distance_file_path)):
+            self.S_traveltimes = self.change_into_int_2dmatrix(self.read_matrix(self.travel_file_path))
+            self.S_distances = self.change_into_int_2dmatrix(self.read_matrix(self.distance_file_path))
         else:
-            self.get_station_traveltimes()
+            self.get_station_traveltimes_and_distances()
             self.get_all_datas()
 
         if (self.is_file_exist(self.vhecle_file_path)):
-            self.S_vhecles = self.read_matrix(self.vhecle_file_path)
+            self.S_vhecles = list(map(int, self.read_matrix(self.vhecle_file_path)))
         else:
             self.get_station_vhecles()
             self.get_all_datas()
 
     def excute(self):
-        available_vhecles = []
-        S = list(range(NUMBER_OF_STATIONS))
-        T_step = np.array(list(range(TIME)))
-        E = list(range(NUMBER_OF_EMPLOYEES))
+        available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME])
+        for i in range(self.NUMBER_OF_STATIONS):
+            available_vhecles[i][0] = self.S_vhecles[i]
+        stations = list(range(self.NUMBER_OF_STATIONS))
+        time_steps = np.array(list(range(self.TIME)))
+        # demands = np.random.randint(-90, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
+        demands = np.zeros([self.TIME - 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS])
+        demands[0][1][0] = 1
         price_per_L = 136.3
         distance_per_L = 35000
         price_per_distance = price_per_L / distance_per_L
-        # v[m/min]
-        v_mean = 25000 / 60
-        price_per_min = price_per_distance * v_mean
+        # # v[m/min]
+        distance_per_min = 25000 / 60
+        price_per_min = price_per_distance * distance_per_min
 
         rde = 0
         rdf = 0
         cost = 0
         success = 0
         time_over = 0
-        for t in T_step:
-            if (t != TIME - 1):
-                for i in S:
-                    Av[i][t + 1] += Av[i][t]
-                for i in S:
-                    for j in S:
-                        if (i != j and Demands[t][i][j]):
-                            if (t + T_trans[i][j] >= TIME):
+        for t in time_steps:
+            if (t != self.TIME - 1):
+                for i in stations:
+                    available_vhecles[i][t + 1] += available_vhecles[i][t]
+                for i in stations:
+                    for j in stations:
+                        if (i != j and demands[t][i][j]):
+                            if (t + self.S_traveltimes[i][j] >= self.TIME):
                                 time_over += 1
                             else:
-                                if (Av[i][t] == 0):
+                                if (available_vhecles[i][t] == 0):
                                     rde += 1
-                                elif (
-                                    Av[j][t + T_trans[i][j]] == NUMBER_OF_PARKING_SLOTS - 1
-                                ):
+                                if (available_vhecles[j][t + self.S_traveltimes[i][j]] == self.S_capacities[j]):
                                     rdf += 1
-                                else:
-                                    Av[j][t + T_trans[i][j]] += 1
-                                    Av[i][t + 1] -= 1
-                                    cost += C[i][j]
+                                if (available_vhecles[i][t] != 0 and available_vhecles[j][t + self.S_traveltimes[i][j]] != self.S_capacities[j]):
+                                    available_vhecles[j][t + self.S_traveltimes[i][j]] += 1
+                                    available_vhecles[i][t + 1] -= 1
+                                    # cost += C[i][j]
                                     success += 1
-            path = './result_non_jocky.csv'
+            path = self.sub_dir_path / 'result_non_jocky.csv'
             f = open(path, 'a')
-            f.write(str(sum(sum(sum(Demands)))) + ',')
+            f.write(str(sum(sum(sum(demands)))) + ',')
             f.write(str(rdf) + ',')
             f.write(str(rde) + ',')
             f.write(str(success) + ',')
-            f.write(str(time_over) + ',')
-            f.write(str(cost) + '\n')
+            f.write(str(time_over) + '\n')
+            # f.write(str(cost) + '\n')
             f.close()
+        self.write_matrix(
+            available_vhecles,
+            self.sub_dir_path / 'available_vhecles.csv'
+        )
+        self.write_matrix(
+            demands,
+            self.sub_dir_path / 'demands.csv'
+        )
 
 
 if (__name__ == '__main__'):
