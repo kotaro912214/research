@@ -296,13 +296,17 @@ class Simulation():
         # demands = np.random.randint(-90, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
         demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
 
-        # test case 1
-        # demands[0][1][0] = 1
+        # test case a
+        # demands[0][1][0] = 2
         # demands[3][1][0] = 1
 
-        # test case 2
-        demands[0][0][1] = 1
-        demands[0][2][1] = 1
+        # test case b
+        # demands[0][0][1] = 1
+        # demands[0][2][1] = 1
+
+        # test case c
+        demands[0][0][1] = 2
+        demands[0][1][2] = 1
 
         price_per_L = 136.3
         distance_per_L = 35000
@@ -325,22 +329,57 @@ class Simulation():
 
         for t in time_steps:
             if (t != self.TIME):
-                for i in stations:
-                    for j in stations:
-                        if (i != j and demands[t][i][j]):
-                            t_tmp = t + self.S_traveltimes[i][j]
-                            if (t_tmp > self.TIME):
-                                time_over += 1
-                            else:
-                                if (available_vhecles[i][t] == 0):
-                                    rde += 1
-                                if (available_vhecles[j][t_tmp] == self.S_capacities[j]):
-                                    rdf += 1
-                                if ((available_vhecles[i][t] != 0) and (available_vhecles[j][t_tmp] != self.S_capacities[j])):
-                                    available_vhecles[i][t + 1:] = list(map(lambda x: x - 1, available_vhecles[i][t + 1:]))
-                                    available_vhecles[j][t_tmp:] = list(map(lambda x: x + 1, available_vhecles[j][t_tmp:]))
-                                    # cost += C[i][j]
-                                    success += 1
+                i_j_list = []
+                for i in range(self.NUMBER_OF_STATIONS):
+                    for j in range(self.NUMBER_OF_STATIONS):
+                        if (i == j):
+                            continue
+                        i_j_list.append((
+                            i, j,
+                            self.S_capacities[i] - available_vhecles[i][t],
+                            sum([row[j] for row in demands[t]]),
+                        ))
+                i_j_list = sorted(i_j_list, key=lambda x: (x[2], x[3]))
+                for i_j in i_j_list:
+                    i = i_j[0]
+                    j = i_j[1]
+                    if (i != j and demands[t][i][j]):
+                        t_tmp = t + self.S_traveltimes[i][j]
+                        if (t_tmp > self.TIME):
+                            time_over += 1
+                        else:
+                            if (available_vhecles[i][t] == 0):
+                                rde += demands[t][i][j]
+                            if (available_vhecles[j][t_tmp] == self.S_capacities[j]):
+                                rdf += demands[t][i][j]
+                            if ((available_vhecles[i][t] != 0) and (available_vhecles[j][t_tmp] != self.S_capacities[j])):
+                                if (available_vhecles[i][t] >= demands[t][i][j]):
+                                    # all vhecles are available in i
+                                    if (available_vhecles[j][t_tmp] + demands[t][i][j] <= self.S_capacities[j]):
+                                        # parking is available
+                                        can_contract = demands[t][i][j]
+                                    else:
+                                        # parking is not available
+                                        can_contract = self.S_capacities[j] - available_vhecles[j][t_tmp]
+                                        rdf += (available_vhecles[j][t_tmp] + demands[t][i][j] - self.S_capacities[j])
+                                else:
+                                    # all vhecles are not available
+                                    if (available_vhecles[j][t_tmp] + demands[t][i][j] <= self.S_capacities[j]):
+                                        # parking is available
+                                        can_contract = available_vhecles[j][t_tmp]
+                                        rde += (demands[t][i][j] - available_vhecles[i][t])
+                                    else:
+                                        # parking is not available
+                                        can_contract = min([
+                                            self.S_capacities[j] - available_vhecles[j][t_tmp],
+                                            available_vhecles[i][t]
+                                        ])
+                                        rdf += (available_vhecles[j][t_tmp] + demands[t][i][j] - self.S_capacities[j])
+                                        rde += (demands[t][i][j] - available_vhecles[i][t])
+                                available_vhecles[i][t + 1:] = list(map(lambda x: x - can_contract, available_vhecles[i][t + 1:]))
+                                available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
+                                # cost += C[i][j]
+                                success += can_contract
 
             self.write_matrix(
                 [np.array(demands).sum(), rdf, rde, success, time_over],
