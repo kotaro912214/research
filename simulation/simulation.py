@@ -81,21 +81,6 @@ class Simulation():
         else:
             return response
 
-    def change_into_int_2dmatrix(self, matrix):
-        new_matrix = [[0 for x in range(len(matrix[0]))] for x in range(len(matrix))]
-        for i in range(len(matrix)):
-            for j in range(len(matrix[0])):
-                new_matrix[i][j] += int(my_round(float(matrix[i][j])))
-        return new_matrix
-
-    def change_into_int_3dmatrix(self, matrix):
-        new_matrix = [[[0 for x in range(len(matrix[0][0]))] for x in range(len(matrix[0]))] for x in range(len(matrix))]
-        for i in range(len(matrix)):
-            for j in range(len(matrix[0])):
-                for k in range((len(matrix[0][0]))):
-                    new_matrix[i][j][k] += int(my_round(float(matrix[i][j][k])))
-        return new_matrix
-
     def write_matrix(self, matrix, path, mode='x'):
         file = open(path, mode, encoding='utf-8')
         writer = csv.writer(file, lineterminator='\n')
@@ -214,8 +199,8 @@ class Simulation():
         params_route['order'] = 'total_distance'
         params_route['car-fuel'] = str(self.FUEL_CONSUMPTION)
 
-        S_distances = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
-        S_traveltimes = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+        S_distances = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
+        S_traveltimes = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
         for i in range(self.NUMBER_OF_STATIONS - 1):
             for j in range(i + 1, self.NUMBER_OF_STATIONS):
                 time.sleep(1)
@@ -284,9 +269,9 @@ class Simulation():
 
         if (self.is_file_exist(self.travel_file_path) and self.is_file_exist(self.distance_file_path)):
             self.S_traveltimes = self.read_matrix(self.travel_file_path)
-            self.S_traveltimes = self.change_into_int_2dmatrix(self.S_traveltimes)
+            self.S_traveltimes = np.array(self.S_traveltimes, dtype=int).tolist()
             self.S_distances = self.read_matrix(self.distance_file_path)
-            self.S_distances = self.change_into_int_2dmatrix(self.S_distances)
+            self.S_distances = np.array(self.S_distances, dtype=int).tolist()
         else:
             self.get_station_traveltimes_and_distances()
             self.get_all_datas()
@@ -299,20 +284,19 @@ class Simulation():
             self.get_all_datas()
 
     def excute(self):
-        available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME + 1])
+        available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME + 1], dtype=int).tolist()
         for i in range(self.NUMBER_OF_STATIONS):
             available_vhecles[i][0] = self.S_vhecles[i]
 
         stations = list(range(self.NUMBER_OF_STATIONS))
-        time_steps = np.array(list(range(self.TIME + 1)))
+        time_steps = list(range(self.TIME + 1))
         # demands = np.random.randint(-90, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
-        demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS])
+        demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
         demands[0][1][0] = 1
 
         price_per_L = 136.3
         distance_per_L = 35000
         price_per_distance = price_per_L / distance_per_L
-        # # v[m/min]
         distance_per_min = 25000 / 60
         price_per_min = price_per_distance * distance_per_min
 
@@ -350,23 +334,24 @@ class Simulation():
                                     success += 1
 
             self.write_matrix(
-                [sum(sum(sum(demands))), rdf, rde, success, time_over],
+                [np.array(demands).sum(), rdf, rde, success, time_over],
                 result_file_path,
                 mode='a'
             )
         self.write_matrix(
-            self.change_into_int_2dmatrix(available_vhecles),
+            available_vhecles,
             self.sub_dir_path / 'available_vhecles.csv'
         )
-        self.write_matrix(
-            self.change_into_int_3dmatrix(demands),
-            self.sub_dir_path / 'demands.csv'
-        )
+        for demand in demands:
+            self.write_matrix(
+                demand + [['-', '-', '-']],
+                self.sub_dir_path / 'demands.csv',
+                mode='a'
+            )
 
     def test(self):
-        print(list(range(self.TIME + 1)))
-        demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS])
-        print(demands)
+        demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
+        print(np.array(demands).sum())
 
 
 if (__name__ == '__main__'):
