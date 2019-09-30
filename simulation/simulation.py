@@ -82,13 +82,22 @@ class Simulation():
             return response
 
     def change_into_int_2dmatrix(self, matrix):
+        new_matrix = [[0 for x in range(len(matrix[0]))] for x in range(len(matrix))]
         for i in range(len(matrix)):
-                for j in range(len(matrix[0])):
-                    matrix[i][j] = int(my_round(float(matrix[i][j])))
-        return matrix
+            for j in range(len(matrix[0])):
+                new_matrix[i][j] += int(my_round(float(matrix[i][j])))
+        return new_matrix
 
-    def write_matrix(self, matrix, path):
-        file = open(path, 'x', encoding='utf-8')
+    def change_into_int_3dmatrix(self, matrix):
+        new_matrix = [[[0 for x in range(len(matrix[0][0]))] for x in range(len(matrix[0]))] for x in range(len(matrix))]
+        for i in range(len(matrix)):
+            for j in range(len(matrix[0])):
+                for k in range((len(matrix[0][0]))):
+                    new_matrix[i][j][k] += int(my_round(float(matrix[i][j][k])))
+        return new_matrix
+
+    def write_matrix(self, matrix, path, mode='x'):
+        file = open(path, mode, encoding='utf-8')
         writer = csv.writer(file, lineterminator='\n')
         desc = 'making ' + path.name
         if (type(matrix[0]) == list or type(matrix[0]) == np.ndarray):
@@ -290,14 +299,16 @@ class Simulation():
             self.get_all_datas()
 
     def excute(self):
-        available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME])
+        available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME + 1])
         for i in range(self.NUMBER_OF_STATIONS):
             available_vhecles[i][0] = self.S_vhecles[i]
+
         stations = list(range(self.NUMBER_OF_STATIONS))
-        time_steps = np.array(list(range(self.TIME)))
+        time_steps = np.array(list(range(self.TIME + 1)))
         # demands = np.random.randint(-90, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
-        demands = np.zeros([self.TIME - 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS])
+        demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS])
         demands[0][1][0] = 1
+
         price_per_L = 136.3
         distance_per_L = 35000
         price_per_distance = price_per_L / distance_per_L
@@ -310,8 +321,16 @@ class Simulation():
         cost = 0
         success = 0
         time_over = 0
+
+        result_file_path = self.sub_dir_path / 'result.csv'
+        self.write_matrix(
+            ['demands', 'rdf', 'rde', 'success', 'time_over'],
+            result_file_path,
+            mode='a'
+        )
+
         for t in time_steps:
-            if (t != self.TIME - 1):
+            if (t != self.TIME):
                 for i in stations:
                     available_vhecles[i][t + 1] += available_vhecles[i][t]
                 for i in stations:
@@ -324,28 +343,30 @@ class Simulation():
                                     rde += 1
                                 if (available_vhecles[j][t + self.S_traveltimes[i][j]] == self.S_capacities[j]):
                                     rdf += 1
-                                if (available_vhecles[i][t] != 0 and available_vhecles[j][t + self.S_traveltimes[i][j]] != self.S_capacities[j]):
+                                if ((available_vhecles[i][t] != 0) and (available_vhecles[j][t + self.S_traveltimes[i][j]] != self.S_capacities[j])):
                                     available_vhecles[j][t + self.S_traveltimes[i][j]] += 1
                                     available_vhecles[i][t + 1] -= 1
                                     # cost += C[i][j]
                                     success += 1
-            path = self.sub_dir_path / 'result_non_jocky.csv'
-            f = open(path, 'a')
-            f.write(str(sum(sum(sum(demands)))) + ',')
-            f.write(str(rdf) + ',')
-            f.write(str(rde) + ',')
-            f.write(str(success) + ',')
-            f.write(str(time_over) + '\n')
-            # f.write(str(cost) + '\n')
-            f.close()
+
+            self.write_matrix(
+                [sum(sum(sum(demands))), rdf, rde, success, time_over],
+                result_file_path,
+                mode='a'
+            )
         self.write_matrix(
-            available_vhecles,
+            self.change_into_int_2dmatrix(available_vhecles),
             self.sub_dir_path / 'available_vhecles.csv'
         )
         self.write_matrix(
-            demands,
+            self.change_into_int_3dmatrix(demands),
             self.sub_dir_path / 'demands.csv'
         )
+
+    def test(self):
+        print(list(range(self.TIME + 1)))
+        demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS])
+        print(demands)
 
 
 if (__name__ == '__main__'):
