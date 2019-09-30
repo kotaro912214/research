@@ -295,9 +295,14 @@ class Simulation():
 
         # demands = np.random.randint(-90, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
         demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
+
         # test case 1
-        demands[0][1][0] = 1
-        demands[3][1][0] = 1
+        # demands[0][1][0] = 1
+        # demands[3][1][0] = 1
+
+        # test case 2
+        demands[0][0][1] = 1
+        demands[0][2][1] = 1
 
         price_per_L = 136.3
         distance_per_L = 35000
