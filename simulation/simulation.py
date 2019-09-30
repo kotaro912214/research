@@ -286,13 +286,18 @@ class Simulation():
     def excute(self):
         available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME + 1], dtype=int).tolist()
         for i in range(self.NUMBER_OF_STATIONS):
-            available_vhecles[i][0] = self.S_vhecles[i]
+            for j in range(self.TIME + 1):
+                available_vhecles[i][j] = self.S_vhecles[i]
 
         stations = list(range(self.NUMBER_OF_STATIONS))
+
         time_steps = list(range(self.TIME + 1))
+
         # demands = np.random.randint(-90, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
         demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
+        # test case 1
         demands[0][1][0] = 1
+        demands[3][1][0] = 1
 
         price_per_L = 136.3
         distance_per_L = 35000
@@ -316,20 +321,19 @@ class Simulation():
         for t in time_steps:
             if (t != self.TIME):
                 for i in stations:
-                    available_vhecles[i][t + 1] += available_vhecles[i][t]
-                for i in stations:
                     for j in stations:
                         if (i != j and demands[t][i][j]):
-                            if (t + self.S_traveltimes[i][j] >= self.TIME):
+                            t_tmp = t + self.S_traveltimes[i][j]
+                            if (t_tmp > self.TIME):
                                 time_over += 1
                             else:
                                 if (available_vhecles[i][t] == 0):
                                     rde += 1
-                                if (available_vhecles[j][t + self.S_traveltimes[i][j]] == self.S_capacities[j]):
+                                if (available_vhecles[j][t_tmp] == self.S_capacities[j]):
                                     rdf += 1
-                                if ((available_vhecles[i][t] != 0) and (available_vhecles[j][t + self.S_traveltimes[i][j]] != self.S_capacities[j])):
-                                    available_vhecles[j][t + self.S_traveltimes[i][j]] += 1
-                                    available_vhecles[i][t + 1] -= 1
+                                if ((available_vhecles[i][t] != 0) and (available_vhecles[j][t_tmp] != self.S_capacities[j])):
+                                    available_vhecles[i][t + 1:] = list(map(lambda x: x - 1, available_vhecles[i][t + 1:]))
+                                    available_vhecles[j][t_tmp:] = list(map(lambda x: x + 1, available_vhecles[j][t_tmp:]))
                                     # cost += C[i][j]
                                     success += 1
 
@@ -350,7 +354,6 @@ class Simulation():
             )
 
     def test(self):
-        demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
         print(np.array(demands).sum())
 
 

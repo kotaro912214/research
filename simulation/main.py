@@ -2,7 +2,7 @@ from simulation import Simulation
 
 sim_5 = Simulation(params={
     'NUMBER_OF_EMPLOYEES': 4,
-    'TIME': 5,
+    'TIME': 6,
     'C_IN': 100,
     'C_OUT': 205,
     'C_E_FULL': 10000,
