@@ -1,4 +1,5 @@
-from pathlib import Path, PureWindowsPath
+from pathlib import Path
+from pathlib import PureWindowsPath
 import csv
 import urllib.request
 import urllib.parse
@@ -293,8 +294,17 @@ class Simulation():
 
         time_steps = list(range(self.TIME + 1))
 
-        # demands = np.random.randint(-90, 2, (TIME - 1, NUMBER_OF_STATIONS, NUMBER_OF_STATIONS))
-        demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
+        demands = np.random.normal(loc=0.3, scale=0.3, size=(self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+        demands = np.round(demands).astype('int')
+
+        for t in range(self.TIME):
+            for i in range(self.NUMBER_OF_STATIONS):
+                for j in range(self.NUMBER_OF_STATIONS):
+                    if (demands[t][i][j] <= 0 or i == j):
+                        demands[t][i][j] = 0
+
+        # demands = np.random.randint(-90, 2, (self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+        # demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
 
         # test case a
         # demands[0][1][0] = 2
@@ -305,8 +315,8 @@ class Simulation():
         # demands[0][2][1] = 1
 
         # test case c
-        demands[0][0][1] = 2
-        demands[0][1][2] = 1
+        # demands[0][0][1] = 2
+        # demands[0][1][2] = 1
 
         price_per_L = 136.3
         distance_per_L = 35000
@@ -376,7 +386,7 @@ class Simulation():
                                         ])
                                         rdf += (available_vhecles[j][t_tmp] + demands[t][i][j] - self.S_capacities[j])
                                         rde += (demands[t][i][j] - available_vhecles[i][t])
-                                available_vhecles[i][t + 1:] = list(map(lambda x: x - can_contract, available_vhecles[i][t + 1:]))
+                                available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
                                 available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
                                 # cost += C[i][j]
                                 success += can_contract
@@ -392,7 +402,12 @@ class Simulation():
         )
         for demand in demands:
             self.write_matrix(
-                demand + [['-', '-', '-']],
+                demand,
+                self.sub_dir_path / 'demands.csv',
+                mode='a'
+            )
+            self.write_matrix(
+                ['-' * (self.NUMBER_OF_STATIONS * 2)],
                 self.sub_dir_path / 'demands.csv',
                 mode='a'
             )
