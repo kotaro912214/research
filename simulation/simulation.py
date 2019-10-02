@@ -203,7 +203,10 @@ class Simulation():
         S_distances = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
         S_traveltimes = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
         for i in range(self.NUMBER_OF_STATIONS - 1):
-            for j in range(i + 1, self.NUMBER_OF_STATIONS):
+            for j in tqdm(
+                range(i + 1, self.NUMBER_OF_STATIONS),
+                desc='searching route of ' + str(i) + 'and' + str(j) + '...'
+            ):
                 time.sleep(1)
                 if (self.S_coords[i] != self.S_coords[j]):
                     params_route['start'] = str(self.S_coords[i][1]) + ',' + str(self.S_coords[i][0])
