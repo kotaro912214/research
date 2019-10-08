@@ -205,7 +205,7 @@ class Simulation():
         for i in range(self.NUMBER_OF_STATIONS - 1):
             for j in tqdm(
                 range(i + 1, self.NUMBER_OF_STATIONS),
-                desc='searching route of ' + str(i) + 'and' + str(j) + '...'
+                desc='searching route of ' + str(i) + '...'
             ):
                 time.sleep(1)
                 if (self.S_coords[i] != self.S_coords[j]):
@@ -297,17 +297,17 @@ class Simulation():
 
         time_steps = list(range(self.TIME + 1))
 
-        demands = np.random.normal(loc=0.3, scale=0.3, size=(self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
-        demands = np.round(demands).astype('int')
+        # demands = np.random.normal(loc=0.3, scale=0.3, size=(self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+        # demands = np.round(demands).astype('int')
 
-        for t in range(self.TIME):
-            for i in range(self.NUMBER_OF_STATIONS):
-                for j in range(self.NUMBER_OF_STATIONS):
-                    if (demands[t][i][j] <= 0 or i == j):
-                        demands[t][i][j] = 0
+        # for t in range(self.TIME):
+        #     for i in range(self.NUMBER_OF_STATIONS):
+        #         for j in range(self.NUMBER_OF_STATIONS):
+        #             if (demands[t][i][j] <= 0 or i == j):
+        #                 demands[t][i][j] = 0
 
         # demands = np.random.randint(-90, 2, (self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
-        # demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
+        demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
 
         # test case a
         # demands[0][1][0] = 2
@@ -320,6 +320,10 @@ class Simulation():
         # test case c
         # demands[0][0][1] = 2
         # demands[0][1][2] = 1
+
+        # test case d
+        demands[0][0][1] = 1
+        demands[4][2][1] = 1
 
         price_per_L = 136.3
         distance_per_L = 35000
