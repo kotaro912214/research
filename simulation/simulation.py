@@ -324,11 +324,19 @@ class Simulation():
         # demands[3][0][2] = 2
         return demands
 
-    def excute(self):
+    def make_available_vhecles(self):
         available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME + 1], dtype=int).tolist()
         for i in range(self.NUMBER_OF_STATIONS):
             for j in range(self.TIME + 1):
                 available_vhecles[i][j] = self.S_vhecles[i]
+        return available_vhecles
+
+    def make_vhecle_routes(self):
+        vhecle_routes = np.zeros([self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
+        return vhecle_routes
+
+    def excute(self):
+        available_vhecles = self.make_available_vhecles()
         # stations = list(range(self.NUMBER_OF_STATIONS))
         time_steps = list(range(self.TIME + 1))
         demands = self.make_random_demands()
@@ -348,6 +356,7 @@ class Simulation():
             result_file_path,
             mode='a'
         )
+        vhecle_routes = self.make_vhecle_routes()
 
         for t in time_steps:
             if (t != self.TIME):
@@ -398,6 +407,7 @@ class Simulation():
                                         ])
                                         rdf += (available_vhecles[j][t_tmp] + demands[t][i][j] - self.S_capacities[j])
                                         rde += (demands[t][i][j] - available_vhecles[i][t])
+                                vhecle_routes[t][i][j] += can_contract
                                 available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
                                 available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
                                 # cost += C[i][j]
@@ -412,6 +422,17 @@ class Simulation():
             available_vhecles,
             self.sub_dir_path / 'available_vhecles.csv'
         )
+        for vhecle_route in vhecle_routes:
+            self.write_matrix(
+                vhecle_route,
+                self.sub_dir_path / 'vhecle_routes.csv',
+                mode='a'
+            )
+            self.write_matrix(
+                ['-' * (self.NUMBER_OF_STATIONS * 2)],
+                self.sub_dir_path / 'vhecle_routes.csv',
+                mode='a'
+            )
         for demand in demands:
             self.write_matrix(
                 demand,
