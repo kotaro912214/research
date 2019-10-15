@@ -1,5 +1,5 @@
 const NUMBER_OF_STATIONS = 5;
-const S_coords = get2dCsv('station_coords.csv');
+const S_coords = get2dCsv('./datas/station_coords.csv');
 const S_latlng = [];
 for (var i = 0; i < NUMBER_OF_STATIONS; i++) {
   S_latlng[i] = new navitime.geo.LatLng(S_coords[i][0], S_coords[i][1]);

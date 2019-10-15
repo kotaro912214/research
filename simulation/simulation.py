@@ -287,31 +287,22 @@ class Simulation():
             self.get_station_vhecles()
             self.get_all_datas()
 
-    def excute(self):
-        available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME + 1], dtype=int).tolist()
-        for i in range(self.NUMBER_OF_STATIONS):
-            for j in range(self.TIME + 1):
-                available_vhecles[i][j] = self.S_vhecles[i]
+    def make_random_demands(self):
+        demands = np.random.normal(loc=0.3, scale=0.3, size=(self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+        demands = np.round(demands).astype('int')
+        for t in range(self.TIME):
+            for i in range(self.NUMBER_OF_STATIONS):
+                for j in range(self.NUMBER_OF_STATIONS):
+                    if (demands[t][i][j] <= 0 or i == j):
+                        demands[t][i][j] = 0
+        return demands
 
-        # stations = list(range(self.NUMBER_OF_STATIONS))
-
-        time_steps = list(range(self.TIME + 1))
-
-        # demands = np.random.normal(loc=0.3, scale=0.3, size=(self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
-        # demands = np.round(demands).astype('int')
-
-        # for t in range(self.TIME):
-        #     for i in range(self.NUMBER_OF_STATIONS):
-        #         for j in range(self.NUMBER_OF_STATIONS):
-        #             if (demands[t][i][j] <= 0 or i == j):
-        #                 demands[t][i][j] = 0
-
-        # demands = np.random.randint(-90, 2, (self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+    def make_test_demands(self):
         demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
 
         # test case a
-        # demands[0][1][0] = 2
-        # demands[3][1][0] = 1
+        demands[0][1][0] = 2
+        demands[3][1][0] = 1
 
         # test case b
         # demands[0][0][1] = 1
@@ -322,28 +313,35 @@ class Simulation():
         # demands[0][1][2] = 1
 
         # test case d
-        demands[0][0][1] = 4
-        demands[0][2][0] = 4
-        demands[1][1][0] = 4
-        demands[1][0][0] = 4
-        demands[1][1][2] = 4
-        demands[2][0][1] = 4
-        demands[4][2][1] = 3
-        demands[2][2][0] = 3
-        demands[3][0][2] = 2
+        # demands[0][0][1] = 4
+        # demands[0][2][0] = 4
+        # demands[1][1][0] = 4
+        # demands[1][0][0] = 4
+        # demands[1][1][2] = 4
+        # demands[2][0][1] = 4
+        # demands[4][2][1] = 3
+        # demands[2][2][0] = 3
+        # demands[3][0][2] = 2
+        return demands
 
+    def excute(self):
+        available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME + 1], dtype=int).tolist()
+        for i in range(self.NUMBER_OF_STATIONS):
+            for j in range(self.TIME + 1):
+                available_vhecles[i][j] = self.S_vhecles[i]
+        # stations = list(range(self.NUMBER_OF_STATIONS))
+        time_steps = list(range(self.TIME + 1))
+        demands = self.make_random_demands()
         # price_per_L = 136.3
         # distance_per_L = 35000
         # price_per_distance = price_per_L / distance_per_L
         # distance_per_min = 25000 / 60
         # price_per_min = price_per_distance * distance_per_min
-
         rde = 0
         rdf = 0
         # cost = 0
         success = 0
         time_over = 0
-
         result_file_path = self.sub_dir_path / 'result.csv'
         self.write_matrix(
             ['demands', 'rdf', 'rde', 'success', 'time_over'],
