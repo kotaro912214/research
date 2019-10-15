@@ -10,7 +10,7 @@ from tqdm import tqdm
 from bs4 import BeautifulSoup
 import numpy as np
 
-from myfunc import my_round
+# from myfunc import my_round
 
 
 class Simulation():
@@ -122,44 +122,44 @@ class Simulation():
         )
 
     def get_station_codes_and_coords(self):
-            # set the params for spot list request
-            params_spot = {
-                'category': '',
-                'coord': '',
-                'radius': '',
-                'limit': '',
-                'datum': ''
-            }
-            # category code of careco carsharing
-            params_spot['category'] = '0817001002'
-            # a coord of shinjuku station
-            params_spot['coord'] = '35.689296,139.702089'
-            params_spot['radius'] = '100000'
-            params_spot['limit'] = str(self.NUMBER_OF_STATIONS * self.SELECT_RATIO)
-            params_spot['datum'] = 'tokyo'
-            # get the data of the station list
-            request = self.make_request(
-                self.KIND_OF_AIP['spot_list'],
-                params_spot
-            )
-            json_res = self.get_response(request)
-            spots = json_res['items']
-            S_coords = []
-            S_codes = []
-            i = 1
-            for spot in spots:
-                if (i % self.SELECT_RATIO == 0):
-                    S_coords.append([spot['coord']['lon'], spot['coord']['lat']])
-                    S_codes.append(spot['code'].replace('-', '.'))
-                i += 1
-            self.write_matrix(
-                S_coords,
-                self.coord_file_path
-            )
-            self.write_matrix(
-                S_codes,
-                self.code_file_path
-            )
+        # set the params for spot list request
+        params_spot = {
+            'category': '',
+            'coord': '',
+            'radius': '',
+            'limit': '',
+            'datum': ''
+        }
+        # category code of careco carsharing
+        params_spot['category'] = '0817001002'
+        # a coord of shinjuku station
+        params_spot['coord'] = '35.689296,139.702089'
+        params_spot['radius'] = '100000'
+        params_spot['limit'] = str(self.NUMBER_OF_STATIONS * self.SELECT_RATIO)
+        params_spot['datum'] = 'tokyo'
+        # get the data of the station list
+        request = self.make_request(
+            self.KIND_OF_AIP['spot_list'],
+            params_spot
+        )
+        json_res = self.get_response(request)
+        spots = json_res['items']
+        S_coords = []
+        S_codes = []
+        i = 1
+        for spot in spots:
+            if (i % self.SELECT_RATIO == 0):
+                S_coords.append([spot['coord']['lon'], spot['coord']['lat']])
+                S_codes.append(spot['code'].replace('-', '.'))
+            i += 1
+        self.write_matrix(
+            S_coords,
+            self.coord_file_path
+        )
+        self.write_matrix(
+            S_codes,
+            self.code_file_path
+        )
 
     def get_station_urls(self):
         S_urls = []
@@ -293,7 +293,7 @@ class Simulation():
             for j in range(self.TIME + 1):
                 available_vhecles[i][j] = self.S_vhecles[i]
 
-        stations = list(range(self.NUMBER_OF_STATIONS))
+        # stations = list(range(self.NUMBER_OF_STATIONS))
 
         time_steps = list(range(self.TIME + 1))
 
@@ -325,15 +325,15 @@ class Simulation():
         demands[0][0][1] = 1
         demands[4][2][1] = 1
 
-        price_per_L = 136.3
-        distance_per_L = 35000
-        price_per_distance = price_per_L / distance_per_L
-        distance_per_min = 25000 / 60
-        price_per_min = price_per_distance * distance_per_min
+        # price_per_L = 136.3
+        # distance_per_L = 35000
+        # price_per_distance = price_per_L / distance_per_L
+        # distance_per_min = 25000 / 60
+        # price_per_min = price_per_distance * distance_per_min
 
         rde = 0
         rdf = 0
-        cost = 0
+        # cost = 0
         success = 0
         time_over = 0
 
@@ -418,9 +418,6 @@ class Simulation():
                 self.sub_dir_path / 'demands.csv',
                 mode='a'
             )
-
-    def test(self):
-        print(np.array(demands).sum())
 
 
 if (__name__ == '__main__'):
