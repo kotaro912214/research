@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <!--　文字コードを設定する　-->
+  <meta charset="UTF-8" />
+  <style>
+    #map {
+      /* <body>内に記載しているID名 */
+      width: 800px;
+      /* 幅 */
+      height: 450px;
+      /* 高さ */
+      background-color: black;
+      /* 背景色 */
+    }
+  </style>
+  <!-- jQueryを使用するために必要な記載です -->
+  <script src='http://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js'></script>
+</head>
+
+<body>
+  <!-- 見出しを表示　-->
+  <h1>ルート線表示 サンプルコード</h1>
+  <p>
+    <!-- ボタンを表示　-->
+    <button type="button" onclick="search()">ナビタイムジャパン ⇔ 東京タワ- のルート線を表示</button>
+  </p>
+  <!-- 地図を表示するための枠を定義 -->
+  <div id="map"></div>
+
+  <!-- axiosを使用するために必要な記載です -->
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <!-- 地図スクリプトを使用するために必要な記載です -->
+  <!-- 19999993の部分にはお伝えしたSIDを設定してください -->
+  <script src="https://api-challenge.navitime.biz/v1s/19999993/mapscript?version=3.4&host=localhost"></script>
+
+  <!-- 地図を表示するためのスクリプト -->
+  <script>
+    // mainメソッド
+    function main() {
+      center = new navitime.geo.LatLng('35.667395', '139.714896') // 中心地点(緯度,経度)の設定(緯度経度は世界測地系の度数表示)
+      map = new navitime.geo.Map('map', center, 15) // 地図を描画・制御する要素(オブジェクト)を作成(引数は, [地図を表示するためのDivId, 中心緯度経度, ズーム値])
+    }
+
+    window.onload = main // HTMLの読み込みが完了してから, main関数を実行(scriptタグの読み込みが完了した状態で実行するために必要)
+  </script>
+
+  <!-- 地図にルート線を表示するためのスクリプト -->
+  <script>
+    function search() {
+      // ルート線を取得するためのurlを定義
+      　 // 19999993の部分にはお伝えしたSIDを設定してください
+      let url = 'https://api-challenge.navitime.biz/v1s/RLVVtSvxKmWi/route/shape?start=35.683499,139.705349&goal=35.684483,139.6985&add=transport_shape&shape-color=railway_line&datum=wgs84';
+      axios
+        .get(url)　 // ルート線を取得
+        .then(connectSuccessRouteShape) // ルート線が取得できた場合　connectSuccessRouteShapeメソッドの呼び出し
+        .catch(connectFailure) // ルート線が取得できなかった場合　connectFailureメソッドの呼び出し
+    }
+
+    function connectSuccessRouteShape(response) {
+      // 変数（route）に取得したAPIのレスポンスを格納
+      route = response.data
+
+      // ルートを描画するためのGeoJSON形式の要素（オブジェクト）を生成し、変数rendererとして定義
+      renderer = new navitime.geo.route.Renderer(route, {
+        map: map,
+        unit: 'degree',
+        allRoute: true, // すべてのルートを表示するか
+        arrow: true, // ルート線上に進行方向の矢印を表示するか
+        originalColor: true, // 路線形状に指定された元々の色を利用するか
+      });
+      // ルートを描画
+      renderer.draw();
+    }
+
+    function connectFailure(error) {
+      // コンソールログへのエラー出力
+      console.error(error)
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    /* スタイルを定義するブロック(<body>内に直接スタイルを記述する場合は不要) */
+    
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    
+    #map {
+      /* <body>内に記載しているID名 */
+      width: 100vw;
+      /* 幅 */
+      height: 100vh;
+      /* 高さ */
+      background-color: black;
+      /* 背景色 */
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 画面に表示する要素を定義するブロック -->
+  <div id="map"></div>
+  <!-- 地図を表示するための枠組み -->
+
+  <!-- 19999993の部分にはお伝えしたSIDを設定してください -->
+  <script src="https://api-challenge.navitime.biz/v1s/RLVVtSvxKmWi/mapscript?version=3.4&host=localhost"></script>
+  <!-- 地図を表示  -->
+
+  <script>
+    // スクリプトを定義するブロック
+    function main() { // 関数名
+      let center = new navitime.geo.LatLng('35.689614', '139.691634') // 中心地点(緯度,経度)の設定(緯度経度は世界測地系の度数表示)
+      map = new navitime.geo.Map('map', center, 20) // 地図を描画・制御する要素(オブジェクト)を作成(引数は, [地図を表示するためのDivId, 中心緯度経度, ズーム値])
+    }
+
+    window.onload = main // HTMLの読み込みが完了してから, main関数を実行(scriptタグの読み込みが完了した状態で実行するために必要)
+  </script>
+
+</body>
+
+</html>

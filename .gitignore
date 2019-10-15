@@ -1,6 +1,5 @@
 *.docx
 *.pptx
-NAVITIME
 sid.txt
 __pycache__
 api.txt

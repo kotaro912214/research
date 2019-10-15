@@ -149,7 +149,7 @@ class Simulation():
         i = 1
         for spot in spots:
             if (i % self.SELECT_RATIO == 0):
-                S_coords.append([spot['coord']['lon'], spot['coord']['lat']])
+                S_coords.append([spot['coord']['lat'], spot['coord']['lon']])
                 S_codes.append(spot['code'].replace('-', '.'))
             i += 1
         self.write_matrix(
@@ -209,8 +209,8 @@ class Simulation():
             ):
                 time.sleep(1)
                 if (self.S_coords[i] != self.S_coords[j]):
-                    params_route['start'] = str(self.S_coords[i][1]) + ',' + str(self.S_coords[i][0])
-                    params_route['goal'] = str(self.S_coords[j][1]) + ',' + str(self.S_coords[j][0])
+                    params_route['start'] = str(self.S_coords[i][0]) + ',' + str(self.S_coords[i][1])
+                    params_route['goal'] = str(self.S_coords[j][0]) + ',' + str(self.S_coords[j][1])
                     time.sleep(0.65)
                     request = self.make_request(self.KIND_OF_AIP['route'], params_route)
                     response = self.get_response(request)
@@ -322,8 +322,15 @@ class Simulation():
         # demands[0][1][2] = 1
 
         # test case d
-        demands[0][0][1] = 1
-        demands[4][2][1] = 1
+        demands[0][0][1] = 4
+        demands[0][2][0] = 4
+        demands[1][1][0] = 4
+        demands[1][0][0] = 4
+        demands[1][1][2] = 4
+        demands[2][0][1] = 4
+        demands[4][2][1] = 3
+        demands[2][2][0] = 3
+        demands[3][0][2] = 2
 
         # price_per_L = 136.3
         # distance_per_L = 35000
