@@ -1,15 +1,183 @@
 const NUMBER_OF_STATIONS = 5;
 const S_coords = get2dCsv('./datas/station_coords.csv');
-const S_latlng = [];
+let S_latlng = [];
 for (var i = 0; i < NUMBER_OF_STATIONS; i++) {
   S_latlng[i] = new navitime.geo.LatLng(S_coords[i][0], S_coords[i][1]);
 }
+const baseUrl = 'https://api-challenge.navitime.biz/v1s/RLVVtSvxKmWi';
+let renderer = null;
+let vhecle_routes = [
+  [
+    [0, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ],
+  [
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0]
+  ]
+]
+let S_traveltimes = [
+  [0, 8, 9, 13, 11],
+  [8, 0, 5, 9, 7],
+  [9, 5, 0, 7, 7],
+  [13, 9, 7, 0, 5],
+  [11, 7, 7, 5, 0]
+];
+
+var t = 0;
+const TIME = 20
 
 function init() {
   center = new navitime.geo.LatLng('35.690171', '139.700378');
   map = new navitime.geo.Map('map', center, 1);
-  setPins();
   fit();
+  setPins();
+  searchRoute();
+  var id_timestep = setInterval(function() {
+    updateFrame();
+    if (t > TIME) {
+      clearInterval(id_timestep);
+    }
+  }, 1000);
 }
 
 function fit() {
@@ -18,7 +186,7 @@ function fit() {
 }
 
 function setPins() {
-  const pins = [];
+  let pins = [];
   for (var i = 0; i < NUMBER_OF_STATIONS; i++) {
     pins[i] = new navitime.geo.overlay.Pin({
       icon: 'icons/pin-' + String(i) + '.png',
@@ -51,15 +219,10 @@ function get2dCsv(url) {
   return res;
 }
 
-const baseUrl = 'https://api-challenge.navitime.biz/v1s/RLVVtSvxKmWi';
-let renderer = null;
-
-searchRoute();
-
-function searchRoute(response) {
-  let start = ['35.693308', '139.698652'];
-  let goal = ['35.696695', '139.698528'];
-  const url = `${baseUrl}/route/shape?start=${start[0]},${start[1]}&goal=${goal[0]},${goal[1]}&add=transport_shape&shape-color=railway_line&datum=wgs84`;
+function searchRoute() {
+  let start = S_coords[0];
+  let goal = S_coords[2];
+  const url = `${baseUrl}/route/shape?start=${start[0]},${start[1]}&goal=${goal[0]},${goal[1]}&add=transport_shape&car=only&shape-color=railway_line&datum=wgs84`;
 
   axios
     .get(url)
@@ -83,3 +246,188 @@ function showRouteShape(response) {
   renderer.draw();
 
 }
+
+var car = [
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ],
+  [
+    [],
+    [],
+    [],
+    [],
+    [],
+  ]
+]
+
+
+var updateFrame = function() {
+  for (var i = 0; i < NUMBER_OF_STATIONS - 1; i++) {
+    for (var j = 0; j < NUMBER_OF_STATIONS - 1; j++) {
+      if (vhecle_routes[t][i][j] != 0) {
+        car[t][i][j][0] = new navitime.geo.overlay.Pin({
+          icon: 'icons/car.png',
+          position: new navitime.geo.LatLng(car[t][i][j][1][0], car[t][i][j][1][0]),
+          draggable: false,
+          map: map,
+          title: 'customer'
+        });
+      }
+    }
+  }
+  t++;
+}
+
+var moveCar = function(pin, ) {
+  car_t[i][j]++;
+  console.log(car_t[i][j]);
+}
+
+// const coords = [
+//   String(Number(S_coords[i][0]) + t * 0.001),
+//   S_coords[i][1]
+// ];
+// let pin = new navitime.geo.overlay.Pin({
+//   icon: 'icons/car.png',
+//   position: new navitime.geo.LatLng(coords[0], coords[1]),
+//   draggable: false,
+//   map: map,
+//   title: 'customer'
+// });
