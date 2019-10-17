@@ -361,7 +361,7 @@ class Simulation():
     def get_cost(self, E, G, t_g, t_e, t):
         w_t = 0.6
         w_d = 0.9
-        delta = (G / (t_g + 1)) - (E / (t_E + 1))
+        delta = (G / (t_g + 1)) - (E / (t_e + 1))
         c = w_d * (1 / (E - G + 1) + delta) + w_t * t
         return c
 
