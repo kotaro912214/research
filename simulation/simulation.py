@@ -44,7 +44,8 @@ class Simulation():
         self.KIND_OF_AIP = {
             'spot_list': '/spot/list?',
             'category_list': '/category/list?',
-            'route': '/route?'
+            'route': '/route?',
+            'route_shape': '/route/shape?'
         }
         self.base_path = PureWindowsPath(Path.cwd())
         self.sub_dir_path = self.base_path / params['CONFIG_NAME']
@@ -334,6 +335,35 @@ class Simulation():
     def make_vhecle_routes(self):
         vhecle_routes = np.zeros([self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
         return vhecle_routes
+
+    def make_route_shapes(self):
+        params_route_shape = {
+            'car': 'only',
+            'start': '',
+            'goal': '',
+            'format': 'json',
+            'add': 'transport_shape',
+            'shape-color': 'railway_line',
+            'datum': 'wgs84'
+        }
+        params_route_shape['start'] = '35.706822,139.813956'
+        params_route_shape['goal'] = '35.706822,139.815956'
+        request = self.make_request(self.KIND_OF_AIP['route_shape'], params_route_shape)
+        response = self.get_response(request)
+        print(response['items'][0]['path'])
+
+    def make_vhecle_route_shapes(self, vhecle_routes):
+        for t in range(self.TIME + 1):
+            for i in range(self.NUMBER_STATIONS):
+                for j in range(self.NUMBER_OF_STATIONS):
+                    print('a')
+
+    def get_cost(self, E, G, t_g, t_e, t):
+        w_t = 0.6
+        w_d = 0.9
+        delta = (G / (t_g + 1)) - (E / (t_E + 1))
+        c = w_d * (1 / (E - G + 1) + delta) + w_t * t
+        return c
 
     def excute(self):
         available_vhecles = self.make_available_vhecles()

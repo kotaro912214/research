@@ -13,6 +13,6 @@ sim_5 = Simulation(params={
     'CONFIG_NAME': 'test_for_web'
 })
 
-sim_5.get_all_datas()
-sim_5.excute()
-# sim_5.test()
+# sim_5.get_all_datas()
+# sim_5.excute()
+sim_5.make_route_shapes()
