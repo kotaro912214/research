@@ -325,10 +325,6 @@ class Simulation():
                 available_vhecles[i][j] = self.S_vhecles[i]
         return available_vhecles
 
-    def make_vhecle_routes(self):
-        vhecle_routes = np.zeros([self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
-        return vhecle_routes
-
     def make_route_coords(self, start, goal):
         params_route_shape = {
             'car': 'only',
@@ -382,7 +378,6 @@ class Simulation():
             result_file_path,
             mode='a'
         )
-        vhecle_routes = self.make_vhecle_routes()
 
         for t in time_steps:
             if (t != self.TIME):
@@ -434,7 +429,6 @@ class Simulation():
                                         ])
                                         rdf += (available_vhecles[j][t_tmp] + demands[t][i][j] - self.S_capacities[j])
                                         rde += (demands[t][i][j] - available_vhecles[i][t])
-                                vhecle_routes[t][i][j] += can_contract
                                 available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
                                 available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
                                 # cost += C[i][j]
@@ -446,12 +440,8 @@ class Simulation():
                 mode='a'
             )
         self.write_matrix(
-            available_vhecles,
-            self.sub_dir_path / 'available_vhecles.csv'
-        )
-        self.write_matrix(
             available_vhecles_for_show,
-            self.sub_dir_path / 'available_vhecles_show.csv'
+            self.sub_dir_path / 'available_vhecles.csv'
         )
         if (self.MAKE_RANDOM_DEMANDS):
             for demand in demands:
