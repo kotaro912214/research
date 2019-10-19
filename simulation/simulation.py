@@ -12,7 +12,6 @@ import numpy as np
 
 # from myfunc import my_round
 
-
 class Simulation():
 
     def __init__(self, params={
@@ -25,7 +24,8 @@ class Simulation():
         'FUEL_CONSUMPTION': 35,
         'NUMBER_OF_STATIONS': 5,
         'SELECT_RATIO': 2,
-        'CONFIG_NAME': 'default'
+        'CONFIG_NAME': 'default',
+        'MAKE_RANDOM_DEMANDS': True
     }):
         if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')
@@ -41,6 +41,7 @@ class Simulation():
         self.NUMBER_OF_STATIONS = params['NUMBER_OF_STATIONS']
         self.C_E_DAY = self.C_E_FULL * (self.TIME / 8 * 60)
         self.SELECT_RATIO = params['SELECT_RATIO']
+        self.MAKE_RANDOM_DEMANDS = params['MAKE_RANDOM_DEMANDS']
         self.KIND_OF_AIP = {
             'spot_list': '/spot/list?',
             'category_list': '/category/list?',
@@ -300,30 +301,22 @@ class Simulation():
 
     def make_test_demands(self):
         demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
-
         # test case a
         demands[0][1][0] = 2
         demands[3][1][0] = 1
-
-        # test case b
-        # demands[0][0][1] = 1
-        # demands[0][2][1] = 1
-
-        # test case c
-        # demands[0][0][1] = 2
-        # demands[0][1][2] = 1
-
-        # test case d
-        # demands[0][0][1] = 4
-        # demands[0][2][0] = 4
-        # demands[1][1][0] = 4
-        # demands[1][0][0] = 4
-        # demands[1][1][2] = 4
-        # demands[2][0][1] = 4
-        # demands[4][2][1] = 3
-        # demands[2][2][0] = 3
-        # demands[3][0][2] = 2
         return demands
+
+    def read_demands(self):
+        demads_file_path = self.sub_dir_path / 'demands.csv'
+        demands = self.read_matrix(demads_file_path)
+        new_demands = []
+        for i in range(self.TIME * (self.NUMBER_OF_STATIONS + 1)):
+            if (demands[i] != ['-' * (self.NUMBER_OF_STATIONS * 2)]):
+                new_demands.append(demands[i])
+        threeD_demands = [None] * self.TIME
+        for t in range(self.TIME):
+            threeD_demands[t] = new_demands[t * 5:(t + 1) * 5]
+        return np.array(threeD_demands, dtype=int).tolist()
 
     def make_available_vhecles(self):
         available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME + 1], dtype=int).tolist()
@@ -336,7 +329,7 @@ class Simulation():
         vhecle_routes = np.zeros([self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
         return vhecle_routes
 
-    def make_route_shapes(self):
+    def make_route_coords(self, start, goal):
         params_route_shape = {
             'car': 'only',
             'start': '',
@@ -346,17 +339,16 @@ class Simulation():
             'shape-color': 'railway_line',
             'datum': 'wgs84'
         }
-        params_route_shape['start'] = '35.706822,139.813956'
-        params_route_shape['goal'] = '35.706822,139.815956'
+        # params_route_shape['start'] = '35.706822,139.813956'
+        # params_route_shape['goal'] = '35.706822,139.815956'
+        params_route_shape['start'] = start
+        params_route_shape['goal'] = goal
         request = self.make_request(self.KIND_OF_AIP['route_shape'], params_route_shape)
         response = self.get_response(request)
-        print(response['items'][0]['path'])
-
-    def make_vhecle_route_shapes(self, vhecle_routes):
-        for t in range(self.TIME + 1):
-            for i in range(self.NUMBER_STATIONS):
-                for j in range(self.NUMBER_OF_STATIONS):
-                    print('a')
+        route_coords = []
+        for path in response['items'][0]['path']:
+            route_coords.append(path['coords'])
+        return route_coords
 
     def get_cost(self, E, G, t_g, t_e, t):
         w_t = 0.6
@@ -367,9 +359,13 @@ class Simulation():
 
     def excute(self):
         available_vhecles = self.make_available_vhecles()
+        available_vhecles_for_show = self.make_available_vhecles()
         # stations = list(range(self.NUMBER_OF_STATIONS))
         time_steps = list(range(self.TIME + 1))
-        demands = self.make_random_demands()
+        if (self.MAKE_RANDOM_DEMANDS):
+            demands = self.make_random_demands()
+        else:
+            demands = self.read_demands()
         # price_per_L = 136.3
         # distance_per_L = 35000
         # price_per_distance = price_per_L / distance_per_L
@@ -392,6 +388,7 @@ class Simulation():
             if (t != self.TIME):
                 i_j_list = []
                 for i in range(self.NUMBER_OF_STATIONS):
+                    available_vhecles_for_show[i][t] = available_vhecles[i][t]
                     for j in range(self.NUMBER_OF_STATIONS):
                         if (i == j):
                             continue
@@ -452,28 +449,22 @@ class Simulation():
             available_vhecles,
             self.sub_dir_path / 'available_vhecles.csv'
         )
-        for vhecle_route in vhecle_routes:
-            self.write_matrix(
-                vhecle_route,
-                self.sub_dir_path / 'vhecle_routes.csv',
-                mode='a'
-            )
-            self.write_matrix(
-                ['-' * (self.NUMBER_OF_STATIONS * 2)],
-                self.sub_dir_path / 'vhecle_routes.csv',
-                mode='a'
-            )
-        for demand in demands:
-            self.write_matrix(
-                demand,
-                self.sub_dir_path / 'demands.csv',
-                mode='a'
-            )
-            self.write_matrix(
-                ['-' * (self.NUMBER_OF_STATIONS * 2)],
-                self.sub_dir_path / 'demands.csv',
-                mode='a'
-            )
+        self.write_matrix(
+            available_vhecles_for_show,
+            self.sub_dir_path / 'available_vhecles_show.csv'
+        )
+        if (self.MAKE_RANDOM_DEMANDS):
+            for demand in demands:
+                self.write_matrix(
+                    demand,
+                    self.sub_dir_path / 'demands.csv',
+                    mode='a'
+                )
+                self.write_matrix(
+                    ['-' * (self.NUMBER_OF_STATIONS * 2)],
+                    self.sub_dir_path / 'demands.csv',
+                    mode='a'
+                )
 
 
 if (__name__ == '__main__'):

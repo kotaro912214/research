@@ -9,10 +9,10 @@ sim_5 = Simulation(params={
     'PRICE_PER_15': 205,
     'FUEL_CONSUMPTION': 35,
     'NUMBER_OF_STATIONS': 5,
-    'SELECT_RATIO': 5,
-    'CONFIG_NAME': 'test_for_web'
+    'SELECT_RATIO': 10,
+    'CONFIG_NAME': 'car5_nojockey',
+    'MAKE_RANDOM_DEMANDS': True
 })
 
-# sim_5.get_all_datas()
-# sim_5.excute()
-sim_5.make_route_shapes()
+sim_5.get_all_datas()
+sim_5.excute()
