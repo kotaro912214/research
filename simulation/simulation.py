@@ -387,6 +387,19 @@ class Simulation():
                 rde += (demand - available_vhecles_start)
         return [can_contract, rdf, rde]
 
+    def move_cars(
+        self,
+        available_vhecles,
+        i,
+        j,
+        t,
+        t_tmp,
+        can_contract
+    ):
+        available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
+        available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
+        return available_vhecles
+
     def excute(self):
         available_vhecles = self.make_available_vhecles()
         available_vhecles_for_show = self.make_available_vhecles()
@@ -415,41 +428,6 @@ class Simulation():
 
         for t in time_steps:
             if (t != self.TIME):
-                # relocation
-                soonest_rdf = self.look_for_soonest_rdf()
-                if (soonest_rdf):
-                    soonest_rde = self.look_for_soonest_rde()
-                    if (soonest_rde):
-                        self.move_cars(
-                            soonest_rdf,
-                            soonest_rde
-                        )
-                    else:
-                        available_park = self.look_for_available_park()
-                        if (available_park):
-                            self.move_cars(
-                                soonest_rdf,
-                                available_park
-                            )
-                        else:
-                            # update time
-                            continue
-                else:
-                    soonest_rde = self.look_for_soonest_rde()
-                    if (soonest_rde):
-                        can_release = self.look_for_park_can_release()
-                        if (can_release):
-                            self.move_cars(
-                                can_release,
-                                soonest_rde
-                            )
-                        else:
-                            # update time
-                            continue
-                    else:
-                        # no more feasible path
-                        continue
-
                 i_j_list = []
                 for i in range(self.NUMBER_OF_STATIONS):
                     available_vhecles_for_show[i][t] = available_vhecles[i][t]
@@ -462,6 +440,54 @@ class Simulation():
                             sum([row[j] for row in demands[t]]),
                         ))
                 i_j_list = sorted(i_j_list, key=lambda x: (x[2], x[3]))
+
+                # relocation
+                soonest_rdf = self.look_for_soonest_rdf()
+                if (soonest_rdf):
+                    soonest_rde = self.look_for_soonest_rde()
+                    if (soonest_rde):
+                        self.move_cars(
+                            available_vhecles,
+                            soonest_rdf,
+                            soonest_rde,
+                            t,
+                            t + self.S_traveltimes[soonest_rdf][soonest_rde],
+                            1
+                        )
+                    else:
+                        available_park = self.look_for_available_park()
+                        if (available_park):
+                            self.move_cars(
+                                available_vhecles,
+                                soonest_rdf,
+                                available_park,
+                                t,
+                                t + self.S_traveltimes[soonest_rdf][available_park],
+                                1
+                            )
+                        else:
+                            # update time
+                            pass
+                else:
+                    soonest_rde = self.look_for_soonest_rde()
+                    if (soonest_rde):
+                        can_release = self.look_for_park_can_release()
+                        if (can_release):
+                            self.move_cars(
+                                available_vhecles,
+                                can_release,
+                                soonest_rde,
+                                t,
+                                t + self.S_traveltimes[can_release][soonest_rde],
+                                1
+                            )
+                        else:
+                            # update time
+                            pass
+                    else:
+                        # no more feasible path
+                        pass
+
                 for i_j in i_j_list:
                     i = i_j[0]
                     j = i_j[1]
@@ -483,8 +509,7 @@ class Simulation():
                                 )
                                 rdf += rdf_tmp
                                 rde += rde_tmp
-                                available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
-                                available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
+                                available_vhecles = self.move_cars(available_vhecles, i, j, t, t_tmp, can_contract)
                                 # cost += C[i][j]
                                 success += can_contract
 
