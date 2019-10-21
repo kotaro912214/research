@@ -15,7 +15,7 @@ import numpy as np
 class Simulation():
 
     def __init__(self, params={
-        'NUMBER_OF_EMPLOYEES': 4,
+        'NUMBER_OF_EMPLOYEES': 5,
         'TIME': 60 * 8,
         'C_IN': 100,
         'C_OUT': 205,
@@ -400,15 +400,19 @@ class Simulation():
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
         return available_vhecles
 
-    def look_for_soonest_rdf(self, available_vhecles):
-        for t in range(self.TIME):
-            for i in range(self.NUMBER_OF_STATION):
-                for J in range(self.NUMBER_OF_STATION):
-                    # available_vhecles[t][i][j]
-                    pass
+    def look_for_soonest_rsf(self, available_vhecles, current, demands):
+        for i in range(self.NUMBER_OF_STATIONS):
+            for j in range(self.NUMBER_OF_STATIONS):
+                if (demands[i][j]):
+                    if (available_vhecles[j][current + self.S_traveltimes[i][j]] == self.S_capacities[j]):
+                        return j
 
-    def look_for_soonest_rde(self):
-        print('a')
+    def look_for_soonest_rse(self, available_vhecles, current, demands):
+        for i in range(self.NUMBER_OF_STATIONS):
+            for j in range(self.NUMBER_OF_STATIONS):
+                if (demands[i][j]):
+                    if (available_vhecles[i][current] <= demands[i][j]):
+                        return i
 
     def excute(self):
         available_vhecles = self.make_available_vhecles()
@@ -454,9 +458,9 @@ class Simulation():
                 i_j_list = sorted(i_j_list, key=lambda x: (x[2], x[3]))
 
                 # relocation
-                soonest_rdf = self.look_for_soonest_rdf(available_vhecles)
+                soonest_rdf = self.look_for_soonest_rsf(available_vhecles, t, demands[t])
                 if (soonest_rdf):
-                    soonest_rde = self.look_for_soonest_rde(available_vhecles)
+                    soonest_rde = self.look_for_soonest_rse(available_vhecles, t, demands[t])
                     if (soonest_rde):
                         available_vhecles = self.move_cars(
                             available_vhecles,
@@ -481,7 +485,7 @@ class Simulation():
                             # update time
                             pass
                 else:
-                    soonest_rde = self.look_for_soonest_rde()
+                    soonest_rde = self.look_for_soonest_rse(available_vhecles, t, demands[t])
                     if (soonest_rde):
                         can_release = self.look_for_park_can_release()
                         if (can_release):

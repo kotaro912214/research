@@ -1,7 +1,7 @@
 from simulation import Simulation
 
 sim_5 = Simulation(params={
-    'NUMBER_OF_EMPLOYEES': 4,
+    'NUMBER_OF_EMPLOYEES': 1,
     'TIME': 30,
     'C_IN': 100,
     'C_OUT': 205,
