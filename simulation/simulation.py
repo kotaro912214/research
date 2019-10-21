@@ -353,6 +353,34 @@ class Simulation():
         c = w_d * (1 / (E - G + 1) + delta) + w_t * t
         return c
 
+    def caluculate_contract(self, available_vhecles_start, available_vhecles_target, capacity_target, demand):
+        rde = 0
+        rdf = 0
+        if (available_vhecles_start >= demand):
+            # all vhecles are available in i
+            if (available_vhecles_target + demand <= capacity_target):
+                # parking is available
+                can_contract = demand
+            else:
+                # parking is not available
+                can_contract = capacity_target - available_vhecles_target
+                rdf += (available_vhecles_target + demand - capacity_target)
+        else:
+            # all vhecles are not available
+            if (available_vhecles_target + demand <= capacity_target):
+                # parking is available
+                can_contract = available_vhecles_target
+                rde += (demand - available_vhecles_start)
+            else:
+                # parking is not available
+                can_contract = min([
+                    capacity_target - available_vhecles_target,
+                    available_vhecles_start
+                ])
+                rdf += (available_vhecles_target + demand - capacity_target)
+                rde += (demand - available_vhecles_start)
+        return [can_contract, rdf, rde]
+
     def excute(self):
         available_vhecles = self.make_available_vhecles()
         available_vhecles_for_show = self.make_available_vhecles()
@@ -406,29 +434,14 @@ class Simulation():
                             if (available_vhecles[j][t_tmp] == self.S_capacities[j]):
                                 rdf += demands[t][i][j]
                             if ((available_vhecles[i][t] != 0) and (available_vhecles[j][t_tmp] != self.S_capacities[j])):
-                                if (available_vhecles[i][t] >= demands[t][i][j]):
-                                    # all vhecles are available in i
-                                    if (available_vhecles[j][t_tmp] + demands[t][i][j] <= self.S_capacities[j]):
-                                        # parking is available
-                                        can_contract = demands[t][i][j]
-                                    else:
-                                        # parking is not available
-                                        can_contract = self.S_capacities[j] - available_vhecles[j][t_tmp]
-                                        rdf += (available_vhecles[j][t_tmp] + demands[t][i][j] - self.S_capacities[j])
-                                else:
-                                    # all vhecles are not available
-                                    if (available_vhecles[j][t_tmp] + demands[t][i][j] <= self.S_capacities[j]):
-                                        # parking is available
-                                        can_contract = available_vhecles[j][t_tmp]
-                                        rde += (demands[t][i][j] - available_vhecles[i][t])
-                                    else:
-                                        # parking is not available
-                                        can_contract = min([
-                                            self.S_capacities[j] - available_vhecles[j][t_tmp],
-                                            available_vhecles[i][t]
-                                        ])
-                                        rdf += (available_vhecles[j][t_tmp] + demands[t][i][j] - self.S_capacities[j])
-                                        rde += (demands[t][i][j] - available_vhecles[i][t])
+                                can_contract, rdf_tmp, rde_tmp = self.caluculate_contract(
+                                    available_vhecles[i][t],
+                                    available_vhecles[j][t_tmp],
+                                    self.S_capacities[j],
+                                    demands[t][i][j]
+                                )
+                                rdf += rdf_tmp
+                                rde += rde_tmp
                                 available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
                                 available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
                                 # cost += C[i][j]
