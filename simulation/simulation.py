@@ -353,7 +353,13 @@ class Simulation():
         c = w_d * (1 / (E - G + 1) + delta) + w_t * t
         return c
 
-    def caluculate_contract(self, available_vhecles_start, available_vhecles_target, capacity_target, demand):
+    def caluculate_contract(
+        self,
+        available_vhecles_start,
+        available_vhecles_target,
+        capacity_target,
+        demand
+    ):
         rde = 0
         rdf = 0
         if (available_vhecles_start >= demand):
@@ -409,6 +415,41 @@ class Simulation():
 
         for t in time_steps:
             if (t != self.TIME):
+                # relocation
+                soonest_rdf = self.look_for_soonest_rdf()
+                if (soonest_rdf):
+                    soonest_rde = self.look_for_soonest_rde()
+                    if (soonest_rde):
+                        self.move_cars(
+                            soonest_rdf,
+                            soonest_rde
+                        )
+                    else:
+                        available_park = self.look_for_available_park()
+                        if (available_park):
+                            self.move_cars(
+                                soonest_rdf,
+                                available_park
+                            )
+                        else:
+                            # update time
+                            continue
+                else:
+                    soonest_rde = self.look_for_soonest_rde()
+                    if (soonest_rde):
+                        can_release = self.look_for_park_can_release()
+                        if (can_release):
+                            self.move_cars(
+                                can_release,
+                                soonest_rde
+                            )
+                        else:
+                            # update time
+                            continue
+                    else:
+                        # no more feasible path
+                        continue
+
                 i_j_list = []
                 for i in range(self.NUMBER_OF_STATIONS):
                     available_vhecles_for_show[i][t] = available_vhecles[i][t]
