@@ -360,8 +360,8 @@ class Simulation():
         capacity_target,
         demand
     ):
-        rde = 0
-        rdf = 0
+        rse = 0
+        rsf = 0
         if (available_vhecles_start >= demand):
             # all vhecles are available in i
             if (available_vhecles_target + demand <= capacity_target):
@@ -370,22 +370,22 @@ class Simulation():
             else:
                 # parking is not available
                 can_contract = capacity_target - available_vhecles_target
-                rdf += (available_vhecles_target + demand - capacity_target)
+                rsf += (available_vhecles_target + demand - capacity_target)
         else:
             # all vhecles are not available
             if (available_vhecles_target + demand <= capacity_target):
                 # parking is available
                 can_contract = available_vhecles_target
-                rde += (demand - available_vhecles_start)
+                rse += (demand - available_vhecles_start)
             else:
                 # parking is not available
                 can_contract = min([
                     capacity_target - available_vhecles_target,
                     available_vhecles_start
                 ])
-                rdf += (available_vhecles_target + demand - capacity_target)
-                rde += (demand - available_vhecles_start)
-        return [can_contract, rdf, rde]
+                rsf += (available_vhecles_target + demand - capacity_target)
+                rse += (demand - available_vhecles_start)
+        return [can_contract, rsf, rse]
 
     def move_cars(
         self,
@@ -399,6 +399,16 @@ class Simulation():
         available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
         return available_vhecles
+
+    def look_for_soonest_rdf(self, available_vhecles):
+        for t in range(self.TIME):
+            for i in range(self.NUMBER_OF_STATION):
+                for J in range(self.NUMBER_OF_STATION):
+                    # available_vhecles[t][i][j]
+                    pass
+
+    def look_for_soonest_rde(self):
+        print('a')
 
     def excute(self):
         available_vhecles = self.make_available_vhecles()
@@ -414,14 +424,16 @@ class Simulation():
         # price_per_distance = price_per_L / distance_per_L
         # distance_per_min = 25000 / 60
         # price_per_min = price_per_distance * distance_per_min
-        rde = 0
-        rdf = 0
+        # we call a rejected demand becouse a station is full "RSF"
+        # we call a rejected demand becouse a station is Empty "RSE"
+        rse = 0
+        rsf = 0
         # cost = 0
         success = 0
         time_over = 0
         result_file_path = self.sub_dir_path / 'result.csv'
         self.write_matrix(
-            ['demands', 'rdf', 'rde', 'success', 'time_over'],
+            ['demands', 'rsf', 'rse', 'success', 'time_over'],
             result_file_path,
             mode='a'
         )
@@ -442,11 +454,11 @@ class Simulation():
                 i_j_list = sorted(i_j_list, key=lambda x: (x[2], x[3]))
 
                 # relocation
-                soonest_rdf = self.look_for_soonest_rdf()
+                soonest_rdf = self.look_for_soonest_rdf(available_vhecles)
                 if (soonest_rdf):
-                    soonest_rde = self.look_for_soonest_rde()
+                    soonest_rde = self.look_for_soonest_rde(available_vhecles)
                     if (soonest_rde):
-                        self.move_cars(
+                        available_vhecles = self.move_cars(
                             available_vhecles,
                             soonest_rdf,
                             soonest_rde,
@@ -457,7 +469,7 @@ class Simulation():
                     else:
                         available_park = self.look_for_available_park()
                         if (available_park):
-                            self.move_cars(
+                            available_vhecles = self.move_cars(
                                 available_vhecles,
                                 soonest_rdf,
                                 available_park,
@@ -473,7 +485,7 @@ class Simulation():
                     if (soonest_rde):
                         can_release = self.look_for_park_can_release()
                         if (can_release):
-                            self.move_cars(
+                            available_vhecles = self.move_cars(
                                 available_vhecles,
                                 can_release,
                                 soonest_rde,
@@ -497,24 +509,24 @@ class Simulation():
                             time_over += 1
                         else:
                             if (available_vhecles[i][t] == 0):
-                                rde += demands[t][i][j]
+                                rse += demands[t][i][j]
                             if (available_vhecles[j][t_tmp] == self.S_capacities[j]):
-                                rdf += demands[t][i][j]
+                                rsf += demands[t][i][j]
                             if ((available_vhecles[i][t] != 0) and (available_vhecles[j][t_tmp] != self.S_capacities[j])):
-                                can_contract, rdf_tmp, rde_tmp = self.caluculate_contract(
+                                can_contract, rsf_tmp, rse_tmp = self.caluculate_contract(
                                     available_vhecles[i][t],
                                     available_vhecles[j][t_tmp],
                                     self.S_capacities[j],
                                     demands[t][i][j]
                                 )
-                                rdf += rdf_tmp
-                                rde += rde_tmp
+                                rsf += rsf_tmp
+                                rse += rse_tmp
                                 available_vhecles = self.move_cars(available_vhecles, i, j, t, t_tmp, can_contract)
                                 # cost += C[i][j]
                                 success += can_contract
 
             self.write_matrix(
-                [np.array(demands).sum(), rdf, rde, success, time_over],
+                [np.array(demands).sum(), rsf, rse, success, time_over],
                 result_file_path,
                 mode='a'
             )
