@@ -9,6 +9,7 @@ import time
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 import numpy as np
+import pysnooper
 
 # from myfunc import my_round
 
@@ -25,7 +26,8 @@ class Simulation():
         'NUMBER_OF_STATIONS': 5,
         'SELECT_RATIO': 2,
         'CONFIG_NAME': 'default',
-        'MAKE_RANDOM_DEMANDS': True
+        'MAKE_RANDOM_DEMANDS': True,
+        'RELOCATE': True
     }):
         if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')
@@ -42,6 +44,7 @@ class Simulation():
         self.C_E_DAY = self.C_E_FULL * (self.TIME / 8 * 60)
         self.SELECT_RATIO = params['SELECT_RATIO']
         self.MAKE_RANDOM_DEMANDS = params['MAKE_RANDOM_DEMANDS']
+        self.RELOCATE = params['RELOCATE']
         self.KIND_OF_AIP = {
             'spot_list': '/spot/list?',
             'category_list': '/category/list?',
@@ -184,7 +187,7 @@ class Simulation():
             soup = BeautifulSoup(html, "html.parser")
             detail_contents = soup.find(class_="detail_contents")
             avail_car = detail_contents.find_all("dd")[2].string[:-1]
-            S_capacities.append(avail_car)
+            S_capacities.append(int(avail_car) + 1)
         self.write_matrix(
             S_capacities,
             self.capa_file_path
@@ -289,33 +292,35 @@ class Simulation():
             self.get_station_vhecles()
             self.get_all_datas()
 
+    @pysnooper.snoop
     def make_random_demands(self):
-        demands = np.random.normal(loc=0.3, scale=0.3, size=(self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+        demands = np.random.normal(loc=0.3, scale=0.3, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
         demands = np.round(demands).astype('int')
-        for t in range(self.TIME):
+        for t in range(self.TIME + 1):
             for i in range(self.NUMBER_OF_STATIONS):
                 for j in range(self.NUMBER_OF_STATIONS):
-                    if (demands[t][i][j] <= 0 or i == j):
+                    if (demands[t][i][j] <= 0 or i == j or t == self.TIME):
                         demands[t][i][j] = 0
         return demands
 
     def make_test_demands(self):
-        demands = np.zeros([self.TIME, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
+        demands = np.zeros([self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS], dtype=int).tolist()
         # test case a
-        demands[0][1][0] = 2
-        demands[3][1][0] = 1
+        demands[0][0][1] = 1
+        demands[4][2][1] = 1
+        demands[7][2][0] = 1
         return demands
 
     def read_demands(self):
         demads_file_path = self.sub_dir_path / 'demands.csv'
         demands = self.read_matrix(demads_file_path)
         new_demands = []
-        for i in range(self.TIME * (self.NUMBER_OF_STATIONS + 1)):
+        for i in range((self.TIME + 1) * (self.NUMBER_OF_STATIONS + 1)):
             if (demands[i] != ['-' * (self.NUMBER_OF_STATIONS * 2)]):
                 new_demands.append(demands[i])
-        threeD_demands = [None] * self.TIME
-        for t in range(self.TIME):
-            threeD_demands[t] = new_demands[t * 5:(t + 1) * 5]
+        threeD_demands = [None] * (self.TIME + 1)
+        for t in range(self.TIME + 1):
+            threeD_demands[t] = new_demands[t * self.NUMBER_OF_STATIONS:(t + 1) * self.NUMBER_OF_STATIONS]
         return np.array(threeD_demands, dtype=int).tolist()
 
     def make_available_vhecles(self):
@@ -353,12 +358,14 @@ class Simulation():
         c = w_d * (1 / (E - G + 1) + delta) + w_t * t
         return c
 
+    @pysnooper.snoop(prefix='calc_contract ', max_variable_length=500)
     def caluculate_contract(
         self,
         available_vhecles_start,
         available_vhecles_target,
         capacity_target,
-        demand
+        demand,
+        t
     ):
         rse = 0
         rsf = 0
@@ -387,6 +394,7 @@ class Simulation():
                 rse += (demand - available_vhecles_start)
         return [can_contract, rsf, rse]
 
+    @pysnooper.snoop(prefix='move_cars ', max_variable_length=1000)
     def move_cars(
         self,
         available_vhecles,
@@ -400,15 +408,17 @@ class Simulation():
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
         return available_vhecles
 
+    @pysnooper.snoop(prefix='rsf ', max_variable_length=1000)
     def look_for_soonest_rsf(self, available_vhecles, current, demands):
         for i in range(self.NUMBER_OF_STATIONS):
             for j in range(self.NUMBER_OF_STATIONS):
-                if (demands[current][i][j]):
+                if (demands[current][i][j] and current + self.S_traveltimes[i][j] < self.TIME):
                     if (available_vhecles[j][current + self.S_traveltimes[i][j]] == self.S_capacities[j]):
                         return [j, current + self.S_traveltimes[i][j]]
         else:
             return [-1, current]
 
+    @pysnooper.snoop(prefix='rse ', max_variable_length=1000)
     def look_for_soonest_rse(self, available_vhecles, current, rsf_target_time, demands, rsf):
         if (rsf >= 0):
             for t_start in range(current, rsf_target_time + 1):
@@ -425,18 +435,21 @@ class Simulation():
                 for i in range(self.NUMBER_OF_STATIONS):
                     for j in range(self.NUMBER_OF_STATIONS):
                         if (demands[t][i][j] and available_vhecles[i][t] == 0):
-                            return i
+                            return [i, t]
             else:
                 return [-1, current]
 
+    @pysnooper.snoop(prefix='available_park ', max_variable_length=1000)
     def look_for_available_park(self, available_vhecles, current, rsf_ratget_time, rsf):
         for t in range(current, rsf_ratget_time + 1):
             for i in range(self.NUMBER_OF_STATIONS):
                 if (available_vhecles[i][t + self.S_traveltimes[rsf][i]] < self.S_capacities[i]):
-                    return i
+                    if (available_vhecles[i][t] > 0):
+                        return [i, t]
         else:
-            return -1
+            return [-1, current]
 
+    @pysnooper.snoop(prefix='can_release ', max_variable_length=1000)
     def look_for_park_can_release(self, available_vhecles, current, rse_target_time, rse):
         for t in range(current, rse_target_time):
             for i in range(self.NUMBER_OF_STATIONS):
@@ -446,6 +459,7 @@ class Simulation():
         else:
             return -1
 
+    # @pysnooper.snoop(prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
     def excute(self):
         available_vhecles = self.make_available_vhecles()
         available_vhecles_for_show = self.make_available_vhecles()
@@ -455,6 +469,7 @@ class Simulation():
             demands = self.make_random_demands()
         else:
             demands = self.read_demands()
+            # demands = self.make_test_demands()
         # price_per_L = 136.3
         # distance_per_L = 35000
         # price_per_distance = price_per_L / distance_per_L
@@ -475,7 +490,7 @@ class Simulation():
         )
 
         for t in time_steps:
-            if (t != self.TIME):
+            if (t != self.TIME + 1):
                 i_j_list = []
                 for i in range(self.NUMBER_OF_STATIONS):
                     available_vhecles_for_show[i][t] = available_vhecles[i][t]
@@ -490,51 +505,55 @@ class Simulation():
                 i_j_list = sorted(i_j_list, key=lambda x: (x[2], x[3]))
 
                 # relocation
-                soonest_rsf, rsf_target_time = self.look_for_soonest_rsf(available_vhecles, t, demands)
-                if (soonest_rsf >= 0):
-                    soonest_rse, rse_target_time = self.look_for_soonest_rse(available_vhecles, t, rsf_target_time, demands, soonest_rsf)
-                    if (soonest_rse >= 0):
-                        available_vhecles = self.move_cars(
-                            available_vhecles,
-                            soonest_rsf,
-                            soonest_rse,
-                            t,
-                            t + self.S_traveltimes[soonest_rsf][soonest_rse],
-                            1
-                        )
-                    else:
-                        available_park = self.look_for_available_park(available_vhecles, t, rsf_target_time, soonest_rsf)
-                        if (available_park >= 0):
+                if (self.RELOCATE):
+                    soonest_rsf, rsf_target_time = self.look_for_soonest_rsf(available_vhecles, t, demands)
+                    if (soonest_rsf >= 0):
+                        soonest_rse, rse_target_time = self.look_for_soonest_rse(available_vhecles, t, rsf_target_time, demands, soonest_rsf)
+                        if (soonest_rse >= 0):
                             available_vhecles = self.move_cars(
                                 available_vhecles,
                                 soonest_rsf,
-                                available_park,
-                                t,
-                                t + self.S_traveltimes[soonest_rsf][available_park],
-                                1
-                            )
-                        else:
-                            # update time
-                            pass
-                else:
-                    soonest_rse, rse_target_time = self.look_for_soonest_rse(available_vhecles, t, rsf_target_time, demands, soonest_rsf)
-                    if (soonest_rse >= 0):
-                        can_release = self.look_for_park_can_release(available_vhecles, t, rse_target_time, soonest_rse)
-                        if (can_release >= 0):
-                            available_vhecles = self.move_cars(
-                                available_vhecles,
-                                can_release,
                                 soonest_rse,
                                 t,
-                                t + self.S_traveltimes[can_release][soonest_rse],
+                                t + self.S_traveltimes[soonest_rsf][soonest_rse],
                                 1
                             )
+                            print('error')
                         else:
-                            # update time
-                            pass
-                    else:
-                        # no more feasible path
-                        pass
+                            [available_park, available_time] = self.look_for_available_park(available_vhecles, t, rsf_target_time, soonest_rsf)
+                            if (available_park >= 0):
+                                available_vhecles = self.move_cars(
+                                    available_vhecles,
+                                    soonest_rsf,
+                                    available_park,
+                                    available_time,
+                                    available_time + self.S_traveltimes[soonest_rsf][available_park],
+                                    1
+                                )
+                            else:
+                                # update time
+                                pass
+                    # else:
+                    #     soonest_rse, rse_target_time = self.look_for_soonest_rse(available_vhecles, t, rsf_target_time, demands, soonest_rsf)
+                    #     if (soonest_rse >= 0):
+                    #         can_release = self.look_for_park_can_release(available_vhecles, t, rse_target_time, soonest_rse)
+                    #         if (can_release >= 0):
+                    #             available_vhecles = self.move_cars(
+                    #                 available_vhecles,
+                    #                 can_release,
+                    #                 soonest_rse,
+                    #                 t,
+                    #                 t + self.S_traveltimes[can_release][soonest_rse],
+                    #                 1
+                    #             )
+                    #             print(t, 'rse-can_release')
+                    #             print(can_release, soonest_rse)
+                    #         else:
+                    #             # update time
+                    #             pass
+                    #     else:
+                    #         # no more feasible path
+                    #         pass
 
                 for i_j in i_j_list:
                     i = i_j[0]
@@ -553,7 +572,8 @@ class Simulation():
                                     available_vhecles[i][t],
                                     available_vhecles[j][t_tmp],
                                     self.S_capacities[j],
-                                    demands[t][i][j]
+                                    demands[t][i][j],
+                                    t
                                 )
                                 rsf += rsf_tmp
                                 rse += rse_tmp
@@ -566,6 +586,8 @@ class Simulation():
                 result_file_path,
                 mode='a'
             )
+        if (self.is_file_exist(self.sub_dir_path / ('available_vhecles.csv'))):
+            Path(self.sub_dir_path / ('available_vhecles.csv')).unlink()
         self.write_matrix(
             available_vhecles_for_show,
             self.sub_dir_path / 'available_vhecles.csv'
