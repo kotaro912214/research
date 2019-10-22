@@ -26,11 +26,11 @@ car3_time30 = Simulation(params={
     'C_E_FULL': 10000,
     'PRICE_PER_15': 205,
     'FUEL_CONSUMPTION': 35,
-    'NUMBER_OF_STATIONS': 3,
-    'SELECT_RATIO': 5,
-    'CONFIG_NAME': 'test_a',
-    'MAKE_RANDOM_DEMANDS': False,
-    'RELOCATE': False
+    'NUMBER_OF_STATIONS': 5,
+    'SELECT_RATIO': 4,
+    'CONFIG_NAME': 'only_rsf_avail',
+    'MAKE_RANDOM_DEMANDS': True,
+    'RELOCATE': True
 })
 
 car3_time30.get_all_datas()
