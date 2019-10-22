@@ -30,7 +30,7 @@ car3_time30 = Simulation(params={
     'SELECT_RATIO': 5,
     'CONFIG_NAME': 'test_a',
     'MAKE_RANDOM_DEMANDS': False,
-    'RELOCATE': True
+    'RELOCATE': False
 })
 
 car3_time30.get_all_datas()

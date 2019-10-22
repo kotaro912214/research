@@ -518,7 +518,6 @@ class Simulation():
                                 t + self.S_traveltimes[soonest_rsf][soonest_rse],
                                 1
                             )
-                            print('error')
                         else:
                             [available_park, available_time] = self.look_for_available_park(available_vhecles, t, rsf_target_time, soonest_rsf)
                             if (available_park >= 0):
