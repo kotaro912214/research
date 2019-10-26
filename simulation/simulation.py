@@ -410,7 +410,6 @@ class Simulation():
         else:
             return [-1, current]
 
-    # @pysnooper.snoop(prefix='rse ', max_variable_length=1000)
     def look_for_soonest_rse(self, available_vhecles, current, rsf_target_time, demands, rsf):
         if (rsf >= 0):
             for t_start in range(current, rsf_target_time + 1):
@@ -447,9 +446,9 @@ class Simulation():
             for i in range(self.NUMBER_OF_STATIONS):
                 if (t + self.S_traveltimes[i][rse] <= rse_target_time):
                     if (available_vhecles[i][t] > 0):
-                        return i
+                        return [i, t]
         else:
-            return -1
+            return [-1, current]
 
     # @pysnooper.snoop(prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
     def excute(self):
