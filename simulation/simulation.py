@@ -196,14 +196,12 @@ class Simulation():
 
     def get_station_traveltimes_and_distances(self):
         params_route = {
-            'car': '',
+            'car': 'only',
             'start': '',
             'goal': '',
-            'order': '',
+            'order': 'total_distance',
             'car-fuel': ''
         }
-        params_route['car'] = 'only'
-        params_route['order'] = 'total_distance'
         params_route['car-fuel'] = str(self.FUEL_CONSUMPTION)
 
         S_distances = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
