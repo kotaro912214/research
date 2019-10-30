@@ -13,16 +13,16 @@
       var map = new navitime.geo.Map('map', sinjuku, 14);
 
       //円
-      circle = new navitime.geo.overlay.Circle({
-        center: sinjuku,
-        fillColor: '#000064',
-        fillOpacity: 0.2,
-        radius: 1500,
-        strokeColor: '#000064',
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        map: map
-      });
+      // circle = new navitime.geo.overlay.Circle({
+      //   center: sinjuku,
+      //   fillColor: '#000064',
+      //   fillOpacity: 0.2,
+      //   radius: 1500,
+      //   strokeColor: '#000064',
+      //   strokeOpacity: 0.8,
+      //   strokeWeight: 2,
+      //   map: map
+      // });
 
       let pins = [];
       let S_coords = [
@@ -37,8 +37,14 @@
         S_latlng[i] = new navitime.geo.LatLng(S_coords[i][0], S_coords[i][1])
       }
 
-
-      for (var i = 0; i < 5; i++) {
+      pins[i] = new navitime.geo.overlay.Pin({
+        icon: './car.png',
+        position: S_latlng[0],
+        draggable: false,
+        map: map,
+        title: 'car'
+      })
+      for (var i = 1; i < 5; i++) {
         pins[i] = new navitime.geo.overlay.Pin({
           icon: '../sample/icons/pin-' + String(i) + '.png',
           position: S_latlng[i],
