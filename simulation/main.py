@@ -18,20 +18,38 @@ from simulation import Simulation
 # car3_time30.get_all_datas()
 # car3_time30.excute()
 
-station10_time3h = Simulation(params={
-    'NUMBER_OF_EMPLOYEES': 2,
-    'TIME': 60 * 3,
+# station10_time3h = Simulation(params={
+#     'NUMBER_OF_EMPLOYEES': 2,
+#     'TIME': 60 * 3,
+#     'C_IN': 100,
+#     'C_OUT': 205,
+#     'C_E_FULL': 10000,
+#     'PRICE_PER_15': 205,
+#     'FUEL_CONSUMPTION': 35,
+#     'NUMBER_OF_STATIONS': 10,
+#     'SELECT_RATIO': 5,
+#     'CONFIG_NAME': 'do_relocate',
+#     'MAKE_RANDOM_DEMANDS': False,
+#     'RELOCATE': False
+# })
+
+# station10_time3h.get_all_datas()
+# station10_time3h.excute()
+
+station5_time2h = Simulation(params={
+    'NUMBER_OF_EMPLOYEES': 5,
+    'TIME': 60 * 2,
     'C_IN': 100,
     'C_OUT': 205,
     'C_E_FULL': 10000,
     'PRICE_PER_15': 205,
     'FUEL_CONSUMPTION': 35,
-    'NUMBER_OF_STATIONS': 10,
+    'NUMBER_OF_STATIONS': 5,
     'SELECT_RATIO': 5,
-    'CONFIG_NAME': 'do_relocate',
-    'MAKE_RANDOM_DEMANDS': True,
-    'RELOCATE': False
+    'CONFIG_NAME': 'for_contest',
+    'MAKE_RANDOM_DEMANDS': False,
+    'RELOCATE': True
 })
 
-station10_time3h.get_all_datas()
-station10_time3h.excute()
+station5_time2h.get_all_datas()
+station5_time2h.excute()

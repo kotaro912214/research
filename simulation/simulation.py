@@ -9,7 +9,7 @@ import time
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 import numpy as np
-import pysnooper
+# import pysnooper
 
 # from myfunc import my_round
 
@@ -348,7 +348,7 @@ class Simulation():
         c = w_d * (1 / (E - G + 1) + delta) + w_t * t
         return c
 
-    @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
+    # @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
     def caluculate_contract(
         self,
         available_vhecles_start,
@@ -369,10 +369,10 @@ class Simulation():
                 can_contract = capacity_target - available_vhecles_target
                 rsf += (available_vhecles_target + demand - capacity_target)
         else:
-            # all vhecles are not available
+            # all vhecles are not available in i
             if (available_vhecles_target + demand <= capacity_target):
                 # parking is available
-                can_contract = available_vhecles_target
+                can_contract = available_vhecles_start
                 rse += (demand - available_vhecles_start)
             else:
                 # parking is not available
@@ -384,7 +384,7 @@ class Simulation():
                 rse += (demand - available_vhecles_start)
         return [can_contract, rsf, rse]
 
-    @pysnooper.snoop('./log.log', prefix='move_cars ', max_variable_length=1000)
+    # @pysnooper.snoop('./log.log', prefix='move_cars ', max_variable_length=1000)
     def move_cars(
         self,
         available_vhecles,
@@ -398,7 +398,7 @@ class Simulation():
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
         return available_vhecles
 
-    @pysnooper.snoop('./log.log', prefix='rsf ', max_variable_length=1000)
+    # @pysnooper.snoop('./log.log', prefix='rsf ', max_variable_length=1000)
     def look_for_soonest_rsf(self, available_vhecles, current, demands):
         for i in range(self.NUMBER_OF_STATIONS):
             for j in range(self.NUMBER_OF_STATIONS):
@@ -408,7 +408,7 @@ class Simulation():
         else:
             return [-1, current]
 
-    @pysnooper.snoop('./log.log', prefix='rse ', max_variable_length=1000)
+    # @pysnooper.snoop('./log.log', prefix='rse ', max_variable_length=1000)
     def look_for_soonest_rse(self, available_vhecles, current, rsf_target_time, demands, rsf):
         if (rsf >= 0):
             for t_start in range(current, rsf_target_time + 1):
@@ -432,7 +432,7 @@ class Simulation():
                     return rse_list[-1]
                 return [-1, current]
 
-    @pysnooper.snoop('./log.log', prefix='available_park ', max_variable_length=1000)
+    # @pysnooper.snoop('./log.log', prefix='available_park ', max_variable_length=1000)
     def look_for_available_park(self, available_vhecles, current, rsf_ratget_time, rsf):
         for t in range(current, rsf_ratget_time + 1):
             for i in range(self.NUMBER_OF_STATIONS):
@@ -442,7 +442,7 @@ class Simulation():
         else:
             return [-1, current]
 
-    @pysnooper.snoop('./log.log', prefix='can_release ', max_variable_length=1000)
+    # @pysnooper.snoop('./log.log', prefix='can_release ', max_variable_length=1000)
     def look_for_park_can_release(self, available_vhecles, current, rse_target_time, rse):
         for t in range(current, rse_target_time):
             for i in range(self.NUMBER_OF_STATIONS):
@@ -452,7 +452,7 @@ class Simulation():
         else:
             return [-1, current]
 
-    @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
+    # @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
     def excute(self):
         available_vhecles = self.make_available_vhecles()
         available_vhecles_for_show = self.make_available_vhecles()
