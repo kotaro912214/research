@@ -10,6 +10,8 @@ from tqdm import tqdm
 from bs4 import BeautifulSoup
 import numpy as np
 # import pysnooper
+import matplotlib
+import matplotlib.pyplot as plt
 
 # from myfunc import my_round
 
@@ -320,6 +322,38 @@ class Simulation():
                 available_vhecles[i][j] = self.S_vhecles[i]
         return available_vhecles
 
+    def draw_rsf_graph(self):
+        matplotlib.use('Agg')
+        rsf_list = self.read_matrix(self.sub_dir_path / 'rsf.csv')
+        rsf_list = np.array(rsf_list).astype('int')
+        plt.plot(np.linspace(0, self.TIME, self.TIME + 1), rsf_list[0], color="red", label='non relocation')
+        plt.plot(np.linspace(0, self.TIME, self.TIME + 1), rsf_list[1], color="blue", label='relocation')
+        plt.legend()
+        plt.grid()
+        plt.title('only rsf considered')
+        plt.xlim(0, self.TIME + 1)
+        plt.ylim(0, max(rsf_list[0]) * 1.1)
+        plt.xlabel('time')
+        plt.ylabel('a number of rsf')
+        plt.savefig(self.sub_dir_path / 'rsf.png')
+        plt.clf()
+
+    def draw_rse_graph(self):
+        matplotlib.use('Agg')
+        rse_list = self.read_matrix(self.sub_dir_path / 'rse.csv')
+        rse_list = np.array(rse_list).astype('int')
+        plt.plot(np.linspace(0, self.TIME, self.TIME + 1), rse_list[0], color="red", label='non relocation')
+        plt.plot(np.linspace(0, self.TIME, self.TIME + 1), rse_list[1], color="blue", label='relocation')
+        plt.legend()
+        plt.grid()
+        plt.title('only rse considered')
+        plt.xlim(0, self.TIME + 1)
+        plt.ylim(0, max(max(rse_list[0]), max(rse_list[1])) * 1.1)
+        plt.xlabel('time')
+        plt.ylabel('a number of rse')
+        plt.savefig(self.sub_dir_path / 'rse.png')
+        plt.clf()
+
     def make_route_coords(self, start, goal):
         params_route_shape = {
             'car': 'only',
@@ -341,11 +375,30 @@ class Simulation():
             route_coords.append(path['coords'])
         return route_coords
 
-    def get_cost(self, E, G, t_g, t_e, t):
+    def get_E(self, start, end):
+        E = start
+        t_e = 1
+        return [E, t_e]
+
+    def get_G(self, start, end):
+        G = end
+        t_g = 1
+        return [G, t_g]
+
+    def get_new_cost(self, available_vhecles, start, end, t_start, t_end):
         w_t = 0.6
         w_d = 0.9
+        E, t_e = self.get_E(start, end)
+        G, t_g = self.get_G(start, end)
         delta = (G / (t_g + 1)) - (E / (t_e + 1))
-        c = w_d * (1 / (E - G + 1) + delta) + w_t * t
+        c = w_d * (1 / (E - G + 1) + delta) + w_t * self.S_traveltimes[start][end]
+        return c
+
+    def get_previous_cost(self, available_vhecles, start, end, t_start, t_end, kind):
+        E, t_e = self.get_E(start, end, kind)
+        G, t_g = self.get_G(start, end, kind)
+        delta = (G / (t_g + 1)) - (E / (t_e + 1))
+        c = 1 / (E - G + 1) + delta
         return c
 
     # @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
@@ -478,6 +531,8 @@ class Simulation():
         relocation_rsf_avail = 0
         relocation_rsf_rse = 0
         relocation_rse_release = 0
+        rsf_list = []
+        rse_list = []
         result_file_path = self.sub_dir_path / 'result.csv'
         self.write_matrix(
             ['demands', 'rsf', 'rse', 'success', 'time_over', 'relocation_rsf_rse', 'relocation_rsf_avail', 'relocation_rse_release'],
@@ -501,21 +556,29 @@ class Simulation():
                 i_j_list = sorted(i_j_list, key=lambda x: (x[2], x[3]))
 
                 # relocation
+                tmp_costs = []
                 for e in range(self.NUMBER_OF_EMPLOYEES):
                     if (self.RELOCATE):
                         soonest_rsf, rsf_target_time = self.look_for_soonest_rsf(available_vhecles, t, demands)
                         if (soonest_rsf >= 0):
                             soonest_rse, t_start = self.look_for_soonest_rse(available_vhecles, t, rsf_target_time, demands, soonest_rsf)
                             if (soonest_rse >= 0):
-                                available_vhecles = self.move_cars(
+                                # available_vhecles = self.move_cars(
+                                #     available_vhecles,
+                                #     soonest_rsf,
+                                #     soonest_rse,
+                                #     t_start,
+                                #     t + self.S_traveltimes[soonest_rsf][soonest_rse],
+                                #     1
+                                # )
+                                # relocation_rsf_rse += 1
+                                tmp_costs.append(self.get_previous_cost(
                                     available_vhecles,
                                     soonest_rsf,
                                     soonest_rse,
                                     t_start,
                                     t + self.S_traveltimes[soonest_rsf][soonest_rse],
-                                    1
-                                )
-                                relocation_rsf_rse += 1
+                                ))
                             else:
                                 available_park, available_time = self.look_for_available_park(available_vhecles, t, rsf_target_time, soonest_rsf)
                                 if (available_park >= 0):
@@ -583,11 +646,23 @@ class Simulation():
                 result_file_path,
                 mode='a'
             )
+            rsf_list.append(rsf)
+            rse_list.append(rse)
         if (self.is_file_exist(self.sub_dir_path / ('available_vhecles.csv'))):
             Path(self.sub_dir_path / ('available_vhecles.csv')).unlink()
         self.write_matrix(
             available_vhecles_for_show,
             self.sub_dir_path / 'available_vhecles.csv'
+        )
+        self.write_matrix(
+            rsf_list,
+            self.sub_dir_path / 'rsf.csv',
+            mode='a'
+        )
+        self.write_matrix(
+            rse_list,
+            self.sub_dir_path / 'rse.csv',
+            mode='a'
         )
         if (self.MAKE_RANDOM_DEMANDS):
             for demand in demands:
