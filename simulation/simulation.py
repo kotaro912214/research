@@ -9,7 +9,7 @@ import time
 from tqdm import tqdm
 from bs4 import BeautifulSoup
 import numpy as np
-# import pysnooper
+import pysnooper
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -30,7 +30,10 @@ class Simulation():
         'CONFIG_NAME': 'default',
         'MAKE_RANDOM_DEMANDS': True,
         'RELOCATE': True,
-        'CONTINUOUS_TIME': True
+        'CONTINUOUS_TIME': True,
+        'VHECLES': 1,
+        'MU': 1,
+        'SIGMA': 1
     }):
         if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')
@@ -50,6 +53,9 @@ class Simulation():
         self.RELOCATE = params['RELOCATE']
         self.CONFIG_NAME = params['CONFIG_NAME']
         self.CONTINUOUS_TIME = params['CONTINUOUS_TIME']
+        self.VHECLES = params['VHECLES']
+        self.MU = params['MU']
+        self.SIGMA = params['SIGMA']
         self.KIND_OF_AIP = {
             'spot_list': '/spot/list?',
             'category_list': '/category/list?',
@@ -64,6 +70,8 @@ class Simulation():
         else:
             print(self.sub_dir_path.name, 'has already existed')
             print('we alternatively use the directory')
+        if (self.VHECLES >= 0):
+            Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
     def read_sid(self):
         sid_path = self.base_path / 'sid.txt'
@@ -253,7 +261,10 @@ class Simulation():
     def get_station_vhecles(self):
         S_vhecles = []
         for capa in self.S_capacities:
-            S_vhecles.append(int(capa) - 1)
+            if (self.VHECLES >= 0):
+                S_vhecles.append(self.VHECLES)
+            else:
+                S_vhecles.append(int(capa) - 1)
         self.write_matrix(
             S_vhecles,
             self.vhecle_file_path
@@ -308,7 +319,8 @@ class Simulation():
             self.get_all_datas()
 
     def make_random_demands(self):
-        demands = np.random.normal(loc=-2.15, scale=1.27, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+        # demands = np.random.normal(loc=-2.15, scale=1.27, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+        demands = np.random.normal(loc=self.MU, scale=self.SIGMA, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
         demands = np.round(demands).astype('int')
         for t in range(self.TIME + 1):
             for i in range(self.NUMBER_OF_STATIONS):
@@ -390,7 +402,7 @@ class Simulation():
             route_coords.append(path['coords'])
         return route_coords
 
-    # @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
+    @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
     def caluculate_contract(
         self,
         available_vhecles_start,
@@ -426,7 +438,7 @@ class Simulation():
                 rse += (demand - available_vhecles_start)
         return [can_contract, rsf, rse]
 
-    # @pysnooper.snoop('./log.log', prefix='move_cars ', max_variable_length=1000)
+    @pysnooper.snoop('./log.log', prefix='move_cars ', max_variable_length=1000)
     def move_cars(
         self,
         available_vhecles,
@@ -440,7 +452,7 @@ class Simulation():
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
         return available_vhecles
 
-    # @pysnooper.snoop('./log.log', prefix='rsf ', max_variable_length=1000)
+    @pysnooper.snoop('./log.log', prefix='rsf ', max_variable_length=1000)
     def look_for_soonest_rsf(self, available_vhecles, current, demands):
         for i in range(self.NUMBER_OF_STATIONS):
             for j in range(self.NUMBER_OF_STATIONS):
@@ -450,7 +462,7 @@ class Simulation():
         else:
             return [-1, current]
 
-    # @pysnooper.snoop('./log.log', prefix='rse ', max_variable_length=1000)
+    @pysnooper.snoop('./log.log', prefix='rse ', max_variable_length=1000)
     def look_for_soonest_rse(self, available_vhecles, current, rsf_target_time, demands, rsf):
         if (rsf >= 0):
             for t_start in range(current, rsf_target_time + 1):
@@ -474,7 +486,7 @@ class Simulation():
                     return rse_list[-1]
                 return [-1, current]
 
-    # @pysnooper.snoop('./log.log', prefix='available_park ', max_variable_length=1000)
+    @pysnooper.snoop('./log.log', prefix='available_park ', max_variable_length=1000)
     def look_for_available_park(self, available_vhecles, current, rsf_ratget_time, rsf):
         for t in range(current, rsf_ratget_time + 1):
             for i in range(self.NUMBER_OF_STATIONS):
@@ -484,7 +496,7 @@ class Simulation():
         else:
             return [-1, current]
 
-    # @pysnooper.snoop('./log.log', prefix='can_release ', max_variable_length=1000)
+    @pysnooper.snoop('./log.log', prefix='can_release ', max_variable_length=1000)
     def look_for_park_can_release(self, available_vhecles, current, rse_target_time, rse):
         for t in range(current, rse_target_time):
             for i in range(self.NUMBER_OF_STATIONS):
@@ -494,7 +506,7 @@ class Simulation():
         else:
             return [-1, current]
 
-    # @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
+    @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
     def excute(self):
         available_vhecles = self.make_available_vhecles()
         available_vhecles_for_show = self.make_available_vhecles()
@@ -524,8 +536,10 @@ class Simulation():
         rse_list = []
         success_list = []
         result_file_path = self.sub_dir_path / 'result.csv'
+        vhecles_mu_sigma_rsf_path = self.sub_dir_path / 'vms_rsf.csv'
+        vhecles_mu_sigma_rse_path = self.sub_dir_path / 'vms_rse.csv'
         self.write_matrix(
-            ['demands', 'rsf', 'rse', 'success', 'time_over', 'relocation_rsf_rse', 'relocation_rsf_avail', 'relocation_rse_release'],
+            [str(self.VHECLES), 'demands', 'rsf', 'rse', 'success', 'time_over', 'relocation_rsf_rse', 'relocation_rsf_avail', 'relocation_rse_release'],
             result_file_path,
             mode='a'
         )
@@ -649,6 +663,16 @@ class Simulation():
         self.write_matrix(
             success_list,
             self.sub_dir_path / 'success.csv',
+            mode='a'
+        )
+        self.write_matrix(
+            [self.MU, self.SIGMA, rsf, np.array(demands).sum()],
+            vhecles_mu_sigma_rsf_path,
+            mode='a'
+        )
+        self.write_matrix(
+            [self.MU, self.SIGMA, rse, np.array(demands).sum()],
+            vhecles_mu_sigma_rse_path,
             mode='a'
         )
         if (self.MAKE_RANDOM_DEMANDS):
