@@ -64,3 +64,21 @@ def check_capa_and_vhecle_ratio():
 
             elastic_capa.get_all_datas()
             elastic_capa.excute()
+
+
+check_v_coords = Simulation(params={
+    'NUMBER_OF_EMPLOYEES': 1,
+    'TIME': 60 * 1,
+    'NUMBER_OF_STATIONS': 3,
+    'SELECT_RATIO': 3,
+    'CONFIG_NAME': 'v_coords',
+    'MAKE_RANDOM_DEMANDS': False,
+    'RELOCATE': True,
+    'CONTINUOUS_TIME': True,
+    'ELASTIC_VHECLES': -1,
+    'MU': -2.15,
+    'SIGMA': 1.27
+})
+
+check_v_coords.get_all_datas()
+check_v_coords.make_vhecle_coords()

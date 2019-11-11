@@ -196,9 +196,7 @@ class Simulation():
                 'start': '',
                 'goal': '',
                 'order': 'total_distance',
-                'car-fuel': ''
             }
-            params_route['car-fuel'] = str(self.FUEL_CONSUMPTION)
 
             S_distances = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
             S_traveltimes = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
@@ -242,14 +240,14 @@ class Simulation():
             )
 
     def get_station_vhecles(self):
-        S_vhecles = []
+        self.S_vhecles = []
         for capa in self.S_capacities:
             if (self.ELASTIC_VHECLES >= 0):
-                S_vhecles.append(self.ELASTIC_VHECLES)
+                self.S_vhecles.append(self.ELASTIC_VHECLES)
             else:
-                S_vhecles.append(int(capa) - 1)
+                self.S_vhecles.append(int(capa) - 1)
         self.write_matrix(
-            S_vhecles,
+            self.S_vhecles,
             self.vhecle_file_path
         )
 
@@ -384,6 +382,11 @@ class Simulation():
         for path in response['items'][0]['path']:
             route_coords.append(path['coords'])
         return route_coords
+
+    def make_vhecle_coords(self):
+        number_of_vhecles = sum(self.S_vhecles)
+        self.V_coords = [[0] * (self.TIME + 1)] * number_of_vhecles
+        print(self.V_coords)
 
     @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
     def caluculate_contract(
