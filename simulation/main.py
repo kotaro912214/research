@@ -68,7 +68,7 @@ def check_capa_and_vhecle_ratio():
 
 check_v_coords = Simulation(params={
     'NUMBER_OF_EMPLOYEES': 1,
-    'TIME': 6 * 1,
+    'TIME': 10 * 1,
     'NUMBER_OF_STATIONS': 10,
     'SELECT_RATIO': 10,
     'CONFIG_NAME': 'v_coords',
@@ -82,3 +82,4 @@ check_v_coords = Simulation(params={
 
 check_v_coords.get_all_datas()
 check_v_coords.make_vhecle_coords()
+check_v_coords.update_vhecle_relational_coords(0, 1, 0, 9)
