@@ -26,9 +26,9 @@ class Simulation():
         'MAKE_RANDOM_DEMANDS': True,
         'RELOCATE': True,
         'CONTINUOUS_TIME': True,
-        'ELASTIC_VHECLES': 1,
-        'MU': 1,
-        'SIGMA': 1
+        'ELASTIC_VHECLES': -1,
+        'MU': -2.15,
+        'SIGMA': 1.27
     }):
         if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')

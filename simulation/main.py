@@ -5,8 +5,8 @@ def check_time_config_affection():
     for b in [True, False]:
         continuous_time = Simulation(params={
             'NUMBER_OF_EMPLOYEES': 1,
-            'TIME': 60 * 1,
-            'NUMBER_OF_STATIONS': 3,
+            'TIME': 60 * 8,
+            'NUMBER_OF_STATIONS': 5,
             'SELECT_RATIO': 5,
             'CONFIG_NAME': 'continuous_time',
             'MAKE_RANDOM_DEMANDS': False,
@@ -26,8 +26,8 @@ def check_time_config_affection():
     for b in [True, False]:
         no_continuous_time = Simulation(params={
             'NUMBER_OF_EMPLOYEES': 1,
-            'TIME': 60 * 1,
-            'NUMBER_OF_STATIONS': 3,
+            'TIME': 60 * 8,
+            'NUMBER_OF_STATIONS': 5,
             'SELECT_RATIO': 5,
             'CONFIG_NAME': 'no_continuous_time',
             'MAKE_RANDOM_DEMANDS': False,
@@ -57,7 +57,7 @@ def check_capa_and_vhecle_ratio():
                 'MAKE_RANDOM_DEMANDS': False,
                 'RELOCATE': True,
                 'CONTINUOUS_TIME': True,
-                'ELASTIC_CAPA': j,
+                'ELASTIC_VHECLES': j,
                 'MU': -2.15,
                 'SIGMA': 1.27
             })
