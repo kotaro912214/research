@@ -31,7 +31,7 @@ class Simulation():
         'MAKE_RANDOM_DEMANDS': True,
         'RELOCATE': True,
         'CONTINUOUS_TIME': True,
-        'VHECLES': 1,
+        'ELASTIC_VHECLES': 1,
         'MU': 1,
         'SIGMA': 1
     }):
@@ -53,7 +53,7 @@ class Simulation():
         self.RELOCATE = params['RELOCATE']
         self.CONFIG_NAME = params['CONFIG_NAME']
         self.CONTINUOUS_TIME = params['CONTINUOUS_TIME']
-        self.VHECLES = params['VHECLES']
+        self.ELASTIC_VHECLES = params['ELASTIC_VHECLES']
         self.MU = params['MU']
         self.SIGMA = params['SIGMA']
         self.KIND_OF_AIP = {
@@ -70,7 +70,7 @@ class Simulation():
         else:
             print(self.sub_dir_path.name, 'has already existed')
             print('we alternatively use the directory')
-        if (self.VHECLES >= 0):
+        if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
     def read_sid(self):
@@ -261,8 +261,8 @@ class Simulation():
     def get_station_vhecles(self):
         S_vhecles = []
         for capa in self.S_capacities:
-            if (self.VHECLES >= 0):
-                S_vhecles.append(self.VHECLES)
+            if (self.ELASTIC_VHECLES >= 0):
+                S_vhecles.append(self.ELASTIC_VHECLES)
             else:
                 S_vhecles.append(int(capa) - 1)
         self.write_matrix(
@@ -536,10 +536,8 @@ class Simulation():
         rse_list = []
         success_list = []
         result_file_path = self.sub_dir_path / 'result.csv'
-        vhecles_mu_sigma_rsf_path = self.sub_dir_path / 'vms_rsf.csv'
-        vhecles_mu_sigma_rse_path = self.sub_dir_path / 'vms_rse.csv'
         self.write_matrix(
-            [str(self.VHECLES), 'demands', 'rsf', 'rse', 'success', 'time_over', 'relocation_rsf_rse', 'relocation_rsf_avail', 'relocation_rse_release'],
+            ['demands', 'rsf', 'rse', 'success', 'time_over', 'relocation_rsf_rse', 'relocation_rsf_avail', 'relocation_rse_release'],
             result_file_path,
             mode='a'
         )
@@ -663,16 +661,6 @@ class Simulation():
         self.write_matrix(
             success_list,
             self.sub_dir_path / 'success.csv',
-            mode='a'
-        )
-        self.write_matrix(
-            [self.MU, self.SIGMA, rsf, np.array(demands).sum()],
-            vhecles_mu_sigma_rsf_path,
-            mode='a'
-        )
-        self.write_matrix(
-            [self.MU, self.SIGMA, rse, np.array(demands).sum()],
-            vhecles_mu_sigma_rse_path,
             mode='a'
         )
         if (self.MAKE_RANDOM_DEMANDS):
