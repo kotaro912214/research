@@ -20,11 +20,6 @@ class Simulation():
     def __init__(self, params={
         'NUMBER_OF_EMPLOYEES': 5,
         'TIME': 60 * 8,
-        'C_IN': 100,
-        'C_OUT': 205,
-        'C_E_FULL': 10000,
-        'PRICE_PER_15': 205,
-        'FUEL_CONSUMPTION': 35,
         'NUMBER_OF_STATIONS': 5,
         'SELECT_RATIO': 2,
         'CONFIG_NAME': 'default',
@@ -41,11 +36,6 @@ class Simulation():
             params['NUMBER_OF_STATIONS'] = 1000 // params['SELECT_RATIO']
         self.NUMBER_OF_EMPLOYEES = params['NUMBER_OF_EMPLOYEES']
         self.TIME = params['TIME']
-        self.C_IN = params['C_IN']
-        self.C_OUT = params['C_OUT']
-        self.C_E_FULL = params['C_E_FULL']
-        self.PRICE_PER_15 = params['PRICE_PER_15']
-        self.FUEL_CONSUMPTION = params['FUEL_CONSUMPTION']
         self.NUMBER_OF_STATIONS = params['NUMBER_OF_STATIONS']
         self.C_E_DAY = self.C_E_FULL * (self.TIME / 8 * 60)
         self.SELECT_RATIO = params['SELECT_RATIO']
@@ -127,12 +117,6 @@ class Simulation():
             ['NUMBER_OF_STATIONS', self.NUMBER_OF_STATIONS],
             ['NUMBER_OF_EMPLOYEES', self.NUMBER_OF_EMPLOYEES],
             ['TIME', self.TIME],
-            ['C_IN', self.C_IN],
-            ['C_OUT', self.C_OUT],
-            ['C_E_FULL', self.C_E_FULL],
-            ['PRICE_PER_15', self.PRICE_PER_15],
-            ['FUEL_CONSUMPTION', self.FUEL_CONSUMPTION],
-            ['C_E_DAY', self.C_E_DAY],
         ]
         self.write_matrix(
             self.CONSTS,
@@ -516,17 +500,8 @@ class Simulation():
             demands = self.make_random_demands()
         else:
             demands = self.read_demands()
-            # demands = self.make_test_demands()
-        # price_per_L = 136.3
-        # distance_per_L = 35000
-        # price_per_distance = price_per_L / distance_per_L
-        # distance_per_min = 25000 / 60
-        # price_per_min = price_per_distance * distance_per_min
-        # we call a rejected demand becouse a station is full "RSF"
-        # we call a rejected demand becouse a station is Empty "RSE"
         rse = 0
         rsf = 0
-        # cost = 0
         success = 0
         time_over = 0
         relocation_rsf_avail = 0
@@ -631,7 +606,6 @@ class Simulation():
                                 rsf += rsf_tmp
                                 rse += rse_tmp
                                 available_vhecles = self.move_cars(available_vhecles, i, j, t, t_tmp, can_contract)
-                                # cost += C[i][j]
                                 success += can_contract
 
             self.write_matrix(
