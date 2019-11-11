@@ -37,7 +37,6 @@ class Simulation():
         self.NUMBER_OF_EMPLOYEES = params['NUMBER_OF_EMPLOYEES']
         self.TIME = params['TIME']
         self.NUMBER_OF_STATIONS = params['NUMBER_OF_STATIONS']
-        self.C_E_DAY = self.C_E_FULL * (self.TIME / 8 * 60)
         self.SELECT_RATIO = params['SELECT_RATIO']
         self.MAKE_RANDOM_DEMANDS = params['MAKE_RANDOM_DEMANDS']
         self.RELOCATE = params['RELOCATE']
@@ -498,8 +497,10 @@ class Simulation():
         time_steps = list(range(self.TIME + 1))
         if (self.MAKE_RANDOM_DEMANDS):
             demands = self.make_random_demands()
-        else:
+        elif (self.is_file_exist(self.sub_dir_path / 'demands.csv')):
             demands = self.read_demands()
+        else:
+            demands = self.make_random_demands()
         rse = 0
         rsf = 0
         success = 0
