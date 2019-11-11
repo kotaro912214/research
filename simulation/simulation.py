@@ -391,7 +391,6 @@ class Simulation():
         for i in range(self.NUMBER_OF_STATIONS):
             self.S_relational_coords[i][0] = self.coordinate_transformation(self.S_coords[i][0])
             self.S_relational_coords[i][1] = self.coordinate_transformation(self.S_coords[i][1])
-        print(self.S_relational_coords)
         self.NUMBER_OF_VHECLES = sum(self.S_vhecles)
         self.V_relational_coords = np.zeros((self.NUMBER_OF_VHECLES, self.TIME + 1, 2))
         i, j = 0, 0
@@ -423,15 +422,15 @@ class Simulation():
         dt = t_goal - t_start
         dx = my_round((self.S_relational_coords[j][1] - self.S_relational_coords[i][1]) / dt, 2)
         dy = my_round((self.S_relational_coords[j][0] - self.S_relational_coords[i][0]) / dt, 2)
-        print(dy)
         for v in range(self.NUMBER_OF_VHECLES):
             if (all(self.S_relational_coords[i] == self.V_relational_coords[v][t_start])):
                 for t in range(t_start, t_goal - 1):
                     self.V_relational_coords[v][t + 1][0] = self.V_relational_coords[v][t][0] + dy
                     self.V_relational_coords[v][t + 1][1] = self.V_relational_coords[v][t][1] + dx
                 self.V_relational_coords[v][t_goal] = self.S_relational_coords[j]
-                print(self.V_relational_coords)
                 return 1
+            else:
+                print('there is no vhecle that can be release.')
 
     @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
     def caluculate_contract(
