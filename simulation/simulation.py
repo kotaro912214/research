@@ -5,6 +5,7 @@ import urllib.request
 import urllib.parse
 import json
 import time
+import pprint
 
 from tqdm import tqdm
 from bs4 import BeautifulSoup
@@ -13,7 +14,7 @@ import pysnooper
 import matplotlib
 import matplotlib.pyplot as plt
 
-# from myfunc import my_round
+from myfunc import my_round
 
 class Simulation():
 
@@ -385,8 +386,32 @@ class Simulation():
 
     def make_vhecle_coords(self):
         number_of_vhecles = sum(self.S_vhecles)
-        self.V_coords = [[0] * (self.TIME + 1)] * number_of_vhecles
-        print(self.V_coords)
+        self.V_coords = np.zeros((number_of_vhecles, self.TIME + 1, 2))
+        i, j = 0, 0
+        while (i < number_of_vhecles):
+            self.V_coords[i][0][1] = self.coordinate_transformation(self.S_coords[j][1])
+            self.V_coords[i][0][0] = self.coordinate_transformation(self.S_coords[j][0])
+            i += 1
+            if (i >= sum(self.S_vhecles[:j + 1])):
+                j += 1
+
+    def coordinate_transformation(self, coord):
+        coord = float(coord)
+        x_lim = [999.000, 0.000]
+        y_lim = [99.000, 0.000]
+        for i in range(self.NUMBER_OF_STATIONS):
+            y_lim[0] = min(y_lim[0], float(self.S_coords[i][0]))
+            x_lim[0] = min(x_lim[0], float(self.S_coords[i][1]))
+            y_lim[1] = max(y_lim[1], float(self.S_coords[i][0]))
+            x_lim[1] = max(x_lim[1], float(self.S_coords[i][1]))
+        x_lim[0] = x_lim[0] - 0.01
+        x_lim[1] = x_lim[1] + 0.01
+        y_lim[0] = y_lim[0] - 0.01
+        y_lim[1] = y_lim[1] + 0.01
+        if (coord > 100.0):
+            return my_round(100 * (coord - x_lim[0]) / (x_lim[1] - x_lim[0]), 2)
+        else:
+            return my_round(100 * (coord - y_lim[0]) / (y_lim[1] - y_lim[0]), 2)
 
     @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
     def caluculate_contract(
@@ -436,6 +461,7 @@ class Simulation():
     ):
         available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
+        # self.V_coords
         return available_vhecles
 
     @pysnooper.snoop('./log.log', prefix='rsf ', max_variable_length=1000)

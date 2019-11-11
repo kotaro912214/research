@@ -68,9 +68,9 @@ def check_capa_and_vhecle_ratio():
 
 check_v_coords = Simulation(params={
     'NUMBER_OF_EMPLOYEES': 1,
-    'TIME': 60 * 1,
-    'NUMBER_OF_STATIONS': 3,
-    'SELECT_RATIO': 3,
+    'TIME': 6 * 1,
+    'NUMBER_OF_STATIONS': 10,
+    'SELECT_RATIO': 10,
     'CONFIG_NAME': 'v_coords',
     'MAKE_RANDOM_DEMANDS': False,
     'RELOCATE': True,
