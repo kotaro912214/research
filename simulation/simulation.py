@@ -395,8 +395,7 @@ class Simulation():
         self.V_relational_coords = np.zeros((self.NUMBER_OF_VHECLES, self.TIME + 1, 2))
         i, j = 0, 0
         while (i < self.NUMBER_OF_VHECLES):
-            self.V_relational_coords[i][0][1] = self.S_relational_coords[j][1]
-            self.V_relational_coords[i][0][0] = self.S_relational_coords[j][0]
+            self.V_relational_coords[i] = [self.S_relational_coords[j]] * (self.TIME + 1)
             i += 1
             if (i >= sum(self.S_vhecles[:j + 1])):
                 j += 1
@@ -425,9 +424,9 @@ class Simulation():
         for v in range(self.NUMBER_OF_VHECLES):
             if (all(self.S_relational_coords[i] == self.V_relational_coords[v][t_start])):
                 for t in range(t_start, t_goal - 1):
-                    self.V_relational_coords[v][t + 1][0] = self.V_relational_coords[v][t][0] + dy
                     self.V_relational_coords[v][t + 1][1] = self.V_relational_coords[v][t][1] + dx
-                self.V_relational_coords[v][t_goal] = self.S_relational_coords[j]
+                    self.V_relational_coords[v][t + 1][0] = self.V_relational_coords[v][t][0] + dy
+                self.V_relational_coords[v][t_goal:] = [self.S_relational_coords[j]] * len(self.V_relational_coords[v][t_goal:])
                 return 1
             else:
                 print('there is no vhecle that can be release.')
@@ -480,7 +479,7 @@ class Simulation():
     ):
         available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
-        # self.V_relational_coords
+        self.update_vhecle_relational_coords(i, j, t, t_tmp)
         return available_vhecles
 
     @pysnooper.snoop('./log.log', prefix='rsf ', max_variable_length=1000)
@@ -549,6 +548,7 @@ class Simulation():
             demands = self.read_demands()
         else:
             demands = self.make_random_demands()
+        self.make_vhecle_coords()
         rse = 0
         rsf = 0
         success = 0
@@ -686,6 +686,7 @@ class Simulation():
             self.sub_dir_path / 'success.csv',
             mode='a'
         )
+        pprint.pprint(self.V_relational_coords)
         if (self.MAKE_RANDOM_DEMANDS):
             for demand in demands:
                 self.write_matrix(
