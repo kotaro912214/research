@@ -72,7 +72,7 @@ check_v_coords = Simulation(params={
     'NUMBER_OF_STATIONS': 3,
     'SELECT_RATIO': 5,
     'CONFIG_NAME': 'v_coords_test',
-    'MAKE_RANDOM_DEMANDS': True,
+    'MAKE_RANDOM_DEMANDS': False,
     'RELOCATE': True,
     'CONTINUOUS_TIME': False,
     'ELASTIC_VHECLES': -1,

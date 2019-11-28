@@ -413,7 +413,7 @@ class Simulation():
         coord = float(coord)
         if (self.x_lim == []):
             x_lim = [999.000, 0.000]
-            y_lim = [99.000, 0.000]
+            y_lim = [999.000, 0.000]
             for i in range(self.NUMBER_OF_STATIONS):
                 y_lim[0] = min(y_lim[0], float(self.S_coords[i][0]))
                 x_lim[0] = min(x_lim[0], float(self.S_coords[i][1]))
@@ -432,13 +432,13 @@ class Simulation():
         dy = my_round((self.S_relational_coords[j][0] - self.S_relational_coords[i][0]) / dt, self.SIGNIFICANT_DIGIT)
         for v in range(self.NUMBER_OF_VHECLES):
             if (all(self.S_relational_coords[i] == self.V_relational_coords[v][t_start])):
+                self.V_relational_coords[v][t_start][0] = my_round(self.V_relational_coords[v][t_start][0] + 0.0001, self.SIGNIFICANT_DIGIT)
                 for t in range(t_start, t_goal - 1):
                     self.V_relational_coords[v][t + 1][1] = my_round(self.V_relational_coords[v][t][1] + dx, self.SIGNIFICANT_DIGIT)
                     self.V_relational_coords[v][t + 1][0] = my_round(self.V_relational_coords[v][t][0] + dy, self.SIGNIFICANT_DIGIT)
                 self.V_relational_coords[v][t_goal:] = [[*self.S_relational_coords[j]]] * len(self.V_relational_coords[v][t_goal:])
                 return 1
         else:
-            print('---')
             print('there is no vhecle that can be release.', i, j, t_start, t_goal)
 
     def make_station_usage_stats(self):
@@ -462,7 +462,7 @@ class Simulation():
         columns = ['type', 'y', 'x', 't', 'size']
         list_for_df = list_for_df1 + list_for_df2
         df = pd.DataFrame(data=list_for_df, columns=columns)
-        # df.to_csv(self.sub_dir_path / 'v_relational_coords.csv')
+        df.to_csv(self.sub_dir_path / 'v_relational_coords.csv')
         fig = px.scatter(
             df, x='x', y='y',
             animation_frame='t',
@@ -731,7 +731,6 @@ class Simulation():
             self.sub_dir_path / 'success.csv',
             mode='a'
         )
-        self.draw_vhecle_transitflow()
         if (self.MAKE_RANDOM_DEMANDS):
             for demand in demands:
                 self.write_matrix(
