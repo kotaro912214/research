@@ -74,11 +74,13 @@ check_v_coords = Simulation(params={
     'CONFIG_NAME': 'v_coords_test',
     'MAKE_RANDOM_DEMANDS': True,
     'RELOCATE': True,
-    'CONTINUOUS_TIME': True,
+    'CONTINUOUS_TIME': False,
     'ELASTIC_VHECLES': -1,
-    'MU': -2.15,
-    'SIGMA': 1.27
+    'MU': -1.15,
+    'SIGMA': 1.27,
+    'SIGNIFICANT_DIGIT': 4
 })
 
 check_v_coords.get_all_datas()
 check_v_coords.excute()
+check_v_coords.draw_vhecle_transitflow()

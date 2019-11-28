@@ -13,6 +13,9 @@ import numpy as np
 import pysnooper
 import matplotlib
 import matplotlib.pyplot as plt
+import plotly
+import plotly.express as px
+import pandas as pd
 
 from myfunc import my_round
 
@@ -29,7 +32,8 @@ class Simulation():
         'CONTINUOUS_TIME': True,
         'ELASTIC_VHECLES': -1,
         'MU': -2.15,
-        'SIGMA': 1.27
+        'SIGMA': 1.27,
+        'SIGNIFICANT_DIGIT': 3
     }):
         if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')
@@ -52,6 +56,7 @@ class Simulation():
             'route': '/route?',
             'route_shape': '/route/shape?'
         }
+        self.SIGNIFICANT_DIGIT = params['SIGNIFICANT_DIGIT']
         self.base_path = PureWindowsPath(Path.cwd())
         self.sub_dir_path = self.base_path / self.CONFIG_NAME
         self.x_lim = []
@@ -200,7 +205,6 @@ class Simulation():
                 'goal': '',
                 'order': 'total_distance',
             }
-
             S_distances = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
             S_traveltimes = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
             for i in range(self.NUMBER_OF_STATIONS - 1):
@@ -291,6 +295,11 @@ class Simulation():
             self.S_traveltimes = np.array(self.S_traveltimes, dtype=int).tolist()
             self.S_distances = self.read_matrix(self.distance_file_path)
             self.S_distances = np.array(self.S_distances, dtype=int).tolist()
+            if ((self.CONTINUOUS_TIME and self.S_traveltimes[0][0] == 1) or (not self.CONTINUOUS_TIME and self.S_traveltimes[0][0] != 1)):
+                Path(self.travel_file_path).unlink()
+                Path(self.distance_file_path).unlink()
+                self.get_station_traveltimes_and_distances()
+                self.get_all_datas()
         else:
             self.get_station_traveltimes_and_distances()
             self.get_all_datas()
@@ -386,7 +395,7 @@ class Simulation():
             route_coords.append(path['coords'])
         return route_coords
 
-    def make_vhecle_coords(self):
+    def make_vhecle_relational_coords(self):
         self.S_relational_coords = np.zeros((self.NUMBER_OF_STATIONS, 2))
         for i in range(self.NUMBER_OF_STATIONS):
             self.S_relational_coords[i][0] = self.coordinate_transformation(self.S_coords[i][0])
@@ -395,7 +404,7 @@ class Simulation():
         self.V_relational_coords = np.zeros((self.NUMBER_OF_VHECLES, self.TIME + 1, 2))
         i, j = 0, 0
         while (i < self.NUMBER_OF_VHECLES):
-            self.V_relational_coords[i] = [self.S_relational_coords[j]] * (self.TIME + 1)
+            self.V_relational_coords[i] = [[*self.S_relational_coords[j]]] * (self.TIME + 1)
             i += 1
             if (i >= sum(self.S_vhecles[:j + 1])):
                 j += 1
@@ -413,25 +422,58 @@ class Simulation():
             self.x_lim = [x_lim[0] - 0.01, x_lim[1] + 0.01]
             self.y_lim = [y_lim[0] - 0.01, y_lim[1] + 0.01]
         if (coord > 100.0):
-            return my_round(100 * (coord - self.x_lim[0]) / (self.x_lim[1] - self.x_lim[0]), 2)
+            return my_round(100 * (coord - self.x_lim[0]) / (self.x_lim[1] - self.x_lim[0]), self.SIGNIFICANT_DIGIT)
         else:
-            return my_round(100 * (coord - self.y_lim[0]) / (self.y_lim[1] - self.y_lim[0]), 2)
+            return my_round(100 * (coord - self.y_lim[0]) / (self.y_lim[1] - self.y_lim[0]), self.SIGNIFICANT_DIGIT)
 
     def update_vhecle_relational_coords(self, i, j, t_start, t_goal):
         dt = t_goal - t_start
-        dx = my_round((self.S_relational_coords[j][1] - self.S_relational_coords[i][1]) / dt, 2)
-        dy = my_round((self.S_relational_coords[j][0] - self.S_relational_coords[i][0]) / dt, 2)
+        dx = my_round((self.S_relational_coords[j][1] - self.S_relational_coords[i][1]) / dt, self.SIGNIFICANT_DIGIT)
+        dy = my_round((self.S_relational_coords[j][0] - self.S_relational_coords[i][0]) / dt, self.SIGNIFICANT_DIGIT)
         for v in range(self.NUMBER_OF_VHECLES):
             if (all(self.S_relational_coords[i] == self.V_relational_coords[v][t_start])):
                 for t in range(t_start, t_goal - 1):
-                    self.V_relational_coords[v][t + 1][1] = self.V_relational_coords[v][t][1] + dx
-                    self.V_relational_coords[v][t + 1][0] = self.V_relational_coords[v][t][0] + dy
-                self.V_relational_coords[v][t_goal:] = [self.S_relational_coords[j]] * len(self.V_relational_coords[v][t_goal:])
+                    self.V_relational_coords[v][t + 1][1] = my_round(self.V_relational_coords[v][t][1] + dx, self.SIGNIFICANT_DIGIT)
+                    self.V_relational_coords[v][t + 1][0] = my_round(self.V_relational_coords[v][t][0] + dy, self.SIGNIFICANT_DIGIT)
+                self.V_relational_coords[v][t_goal:] = [[*self.S_relational_coords[j]]] * len(self.V_relational_coords[v][t_goal:])
                 return 1
-            else:
-                print('there is no vhecle that can be release.')
+        else:
+            print('---')
+            print('there is no vhecle that can be release.', i, j, t_start, t_goal)
 
-    @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
+    def make_station_usage_stats(self):
+        self.S_usage_stats = np.zeros((self.NUMBER_OF_STATIONS, self.TIME + 1))
+        for i in range(self.NUMBER_OF_STATIONS):
+            self.S_usage_stats[i][0] = my_round(self.S_vhecles[i] / self.S_capacities[i], 2)
+
+    def draw_vhecle_transitflow(self):
+        list_for_df1 = []
+        for i in range(len(self.V_relational_coords)):
+            t = 0
+            for col in self.V_relational_coords[i]:
+                list_for_df1.append(['car' + str(i), *col, t, 1])
+                t += 1
+        list_for_df2 = []
+        for i in range(self.NUMBER_OF_STATIONS):
+            t = 0
+            for col in self.S_usage_stats[i]:
+                list_for_df2.append(['stations' + str(i), *self.S_relational_coords[i], t, 5])
+                t += 1
+        columns = ['type', 'y', 'x', 't', 'size']
+        list_for_df = list_for_df1 + list_for_df2
+        df = pd.DataFrame(data=list_for_df, columns=columns)
+        # df.to_csv(self.sub_dir_path / 'v_relational_coords.csv')
+        fig = px.scatter(
+            df, x='x', y='y',
+            animation_frame='t',
+            range_x=[min(df['x']) - 10, max(df['x']) + 10],
+            range_y=[min(df['y']) - 10, max(df['y']) + 10],
+            color='type',
+            size='size',
+        )
+        plotly.offline.plot(fig)
+
+    # @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
     def caluculate_contract(
         self,
         available_vhecles_start,
@@ -467,7 +509,7 @@ class Simulation():
                 rse += (demand - available_vhecles_start)
         return [can_contract, rsf, rse]
 
-    @pysnooper.snoop('./log.log', prefix='move_cars ', max_variable_length=1000)
+    # @pysnooper.snoop('./log.log', prefix='move_cars ', max_variable_length=1000)
     def move_cars(
         self,
         available_vhecles,
@@ -479,10 +521,11 @@ class Simulation():
     ):
         available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
-        self.update_vhecle_relational_coords(i, j, t, t_tmp)
+        for _ in range(can_contract):
+            self.update_vhecle_relational_coords(i, j, t, t_tmp)
         return available_vhecles
 
-    @pysnooper.snoop('./log.log', prefix='rsf ', max_variable_length=1000)
+    # @pysnooper.snoop('./log.log', prefix='rsf ', max_variable_length=1000)
     def look_for_soonest_rsf(self, available_vhecles, current, demands):
         for i in range(self.NUMBER_OF_STATIONS):
             for j in range(self.NUMBER_OF_STATIONS):
@@ -492,7 +535,7 @@ class Simulation():
         else:
             return [-1, current]
 
-    @pysnooper.snoop('./log.log', prefix='rse ', max_variable_length=1000)
+    # @pysnooper.snoop('./log.log', prefix='rse ', max_variable_length=1000)
     def look_for_soonest_rse(self, available_vhecles, current, rsf_target_time, demands, rsf):
         if (rsf >= 0):
             for t_start in range(current, rsf_target_time + 1):
@@ -516,7 +559,7 @@ class Simulation():
                     return rse_list[-1]
                 return [-1, current]
 
-    @pysnooper.snoop('./log.log', prefix='available_park ', max_variable_length=1000)
+    # @pysnooper.snoop('./log.log', prefix='available_park ', max_variable_length=1000)
     def look_for_available_park(self, available_vhecles, current, rsf_ratget_time, rsf):
         for t in range(current, rsf_ratget_time + 1):
             for i in range(self.NUMBER_OF_STATIONS):
@@ -526,7 +569,7 @@ class Simulation():
         else:
             return [-1, current]
 
-    @pysnooper.snoop('./log.log', prefix='can_release ', max_variable_length=1000)
+    # @pysnooper.snoop('./log.log', prefix='can_release ', max_variable_length=1000)
     def look_for_park_can_release(self, available_vhecles, current, rse_target_time, rse):
         for t in range(current, rse_target_time):
             for i in range(self.NUMBER_OF_STATIONS):
@@ -536,7 +579,7 @@ class Simulation():
         else:
             return [-1, current]
 
-    @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
+    # @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
     def excute(self):
         available_vhecles = self.make_available_vhecles()
         available_vhecles_for_show = self.make_available_vhecles()
@@ -548,7 +591,8 @@ class Simulation():
             demands = self.read_demands()
         else:
             demands = self.make_random_demands()
-        self.make_vhecle_coords()
+        self.make_vhecle_relational_coords()
+        self.make_station_usage_stats()
         rse = 0
         rsf = 0
         success = 0
@@ -571,6 +615,7 @@ class Simulation():
                 i_j_list = []
                 for i in range(self.NUMBER_OF_STATIONS):
                     available_vhecles_for_show[i][t] = available_vhecles[i][t]
+                    self.S_usage_stats[i][t] = my_round(available_vhecles[i][t] / self.S_capacities[i], 2)
                     for j in range(self.NUMBER_OF_STATIONS):
                         if (i == j):
                             continue
@@ -686,7 +731,7 @@ class Simulation():
             self.sub_dir_path / 'success.csv',
             mode='a'
         )
-        pprint.pprint(self.V_relational_coords)
+        self.draw_vhecle_transitflow()
         if (self.MAKE_RANDOM_DEMANDS):
             for demand in demands:
                 self.write_matrix(
