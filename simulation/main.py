@@ -66,12 +66,31 @@ def check_capa_and_vhecle_ratio():
             elastic_capa.excute()
 
 
-check_v_coords = Simulation(params={
+# check_v_coords = Simulation(params={
+#     'NUMBER_OF_EMPLOYEES': 1,
+#     'TIME': 30,
+#     'NUMBER_OF_STATIONS': 3,
+#     'SELECT_RATIO': 5,
+#     'CONFIG_NAME': 'v_coords_test',
+#     'MAKE_RANDOM_DEMANDS': False,
+#     'RELOCATE': True,
+#     'CONTINUOUS_TIME': False,
+#     'ELASTIC_VHECLES': -1,
+#     'MU': -1.15,
+#     'SIGMA': 1.27,
+#     'SIGNIFICANT_DIGIT': 4
+# })
+
+# check_v_coords.get_all_datas()
+# check_v_coords.excute()
+# check_v_coords.draw_vhecle_transitflow()
+
+check_cost = Simulation(params={
     'NUMBER_OF_EMPLOYEES': 1,
-    'TIME': 30,
+    'TIME': 15,
     'NUMBER_OF_STATIONS': 3,
     'SELECT_RATIO': 5,
-    'CONFIG_NAME': 'v_coords_test',
+    'CONFIG_NAME': 'check_cost',
     'MAKE_RANDOM_DEMANDS': False,
     'RELOCATE': True,
     'CONTINUOUS_TIME': False,
@@ -81,6 +100,6 @@ check_v_coords = Simulation(params={
     'SIGNIFICANT_DIGIT': 4
 })
 
-check_v_coords.get_all_datas()
-check_v_coords.excute()
-check_v_coords.draw_vhecle_transitflow()
+check_cost.get_all_datas()
+check_cost.excute()
+# check_cost.draw_vhecle_transitflow()
