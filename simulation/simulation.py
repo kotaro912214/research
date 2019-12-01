@@ -779,4 +779,4 @@ class Simulation():
 
 
 if (__name__ == '__main__'):
-    print('you have to import this file from another file')
+    print('you have to use this class by importing this from another file')
