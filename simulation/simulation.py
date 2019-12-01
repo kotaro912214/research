@@ -602,6 +602,38 @@ class Simulation():
         else:
             return [[-1, current]]
 
+    def get_previous_cost(self, available_vhecles, demands, start, goal, t_start, t_goal, mode, target_time):
+        E_table = {
+            'rsf-rse': [2, target_time],
+            'rsf-avail': [1, target_time],
+            'rse-release': [1, t_goal]
+        }
+        E = E_table[mode][0]
+        t_e = E_table[mode][1]
+        G = 0
+        t_g = 100
+        make_rse = 1 - available_vhecles[start][t_start + 1]
+        for j in range(self.NUMBER_OF_STATIONS):
+            if (demands[t_start + 1][start][j]):
+                make_rse += demands[t_start + 1][start][j]
+                t_g = min([t_g, t_start + 1])
+        if (make_rse > 0):
+            G += make_rse
+        make_rsf = 1 + available_vhecles[goal][t_goal] - self.S_capacities[goal]
+        for i in range(self.NUMBER_OF_STATIONS):
+            for t in range(t_start, t_goal - self.S_traveltimes[i][goal] + 1):
+                if (demands[t][i][goal]):
+                    make_rsf += demands[t][i][goal]
+                    t_g = min([t_g, t])
+        if (make_rsf > 0):
+            G += make_rsf
+        delta = (G / (t_g + 1)) - (E / (t_e + 1))
+        if (E - G + 1 <= 0):
+            cost = 100
+        else:
+            cost = 1 / (E - G + 1) + delta
+        return cost
+
     # @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
     def excute(self):
         available_vhecles = self.make_available_vhecles()
@@ -649,7 +681,7 @@ class Simulation():
             # relocation
             if (self.RELOCATE):
                 path_list = []
-                for t_rel in range(t, self.TIME + 1):
+                for t_rel in range(t, min(t + 5, self.TIME + 1)):
                     soonest_rsfs = self.look_for_soonest_rsf(available_vhecles, t_rel, demands)
                     for soonest_rsfs_item in soonest_rsfs:
                         soonest_rsf, rsf_target_time = soonest_rsfs_item
@@ -705,6 +737,13 @@ class Simulation():
                                 else:
                                     # no more feasible path
                                     pass
+                print(path_list)
+                if (len(path_list)):
+                    print(self.get_previous_cost(
+                        available_vhecles,
+                        demands,
+                        *path_list[0]
+                    ))
 
             for i_j in i_j_list:
                 i = i_j[0]
