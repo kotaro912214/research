@@ -606,8 +606,6 @@ class Simulation():
     def excute(self):
         available_vhecles = self.make_available_vhecles()
         available_vhecles_for_show = self.make_available_vhecles()
-        # stations = list(range(self.NUMBER_OF_STATIONS))
-        time_steps = list(range(self.TIME + 1))
         if (self.MAKE_RANDOM_DEMANDS):
             demands = self.make_random_demands()
         elif (self.is_file_exist(self.sub_dir_path / 'demands.csv')):
@@ -633,31 +631,30 @@ class Simulation():
             mode='a'
         )
 
-        for t in time_steps:
-            if (t != self.TIME + 1):
-                i_j_list = []
-                for i in range(self.NUMBER_OF_STATIONS):
-                    available_vhecles_for_show[i][t] = available_vhecles[i][t]
-                    self.S_usage_stats[i][t] = my_round(available_vhecles[i][t] / self.S_capacities[i], 2)
-                    for j in range(self.NUMBER_OF_STATIONS):
-                        if (i == j):
-                            continue
-                        i_j_list.append((
-                            i, j,
-                            self.S_capacities[i] - available_vhecles[i][t],
-                            sum([row[j] for row in demands[t]]),
-                        ))
-                i_j_list = sorted(i_j_list, key=lambda x: (x[2], x[3]))
+        for t in range(self.TIME + 1):
+            i_j_list = []
+            for i in range(self.NUMBER_OF_STATIONS):
+                available_vhecles_for_show[i][t] = available_vhecles[i][t]
+                self.S_usage_stats[i][t] = my_round(available_vhecles[i][t] / self.S_capacities[i], 2)
+                for j in range(self.NUMBER_OF_STATIONS):
+                    if (i == j):
+                        continue
+                    i_j_list.append((
+                        i, j,
+                        self.S_capacities[i] - available_vhecles[i][t],
+                        sum([row[j] for row in demands[t]]),
+                    ))
+            i_j_list = sorted(i_j_list, key=lambda x: (x[2], x[3]))
 
-                # relocation
-                if (self.RELOCATE):
-                    path_list = []
-                    soonest_rsfs = self.look_for_soonest_rsf(available_vhecles, t, demands)
+            # relocation
+            if (self.RELOCATE):
+                path_list = []
+                for t_rel in range(t, self.TIME + 1):
+                    soonest_rsfs = self.look_for_soonest_rsf(available_vhecles, t_rel, demands)
                     for soonest_rsfs_item in soonest_rsfs:
                         soonest_rsf, rsf_target_time = soonest_rsfs_item
                         if (soonest_rsf >= 0):
-                            # soonest_rse, t_start = self.look_for_soonest_rse(available_vhecles, t, rsf_target_time, demands, soonest_rsf)
-                            soonest_rses = self.look_for_soonest_rse(available_vhecles, t, rsf_target_time, demands, soonest_rsf)
+                            soonest_rses = self.look_for_soonest_rse(available_vhecles, t_rel, rsf_target_time, demands, soonest_rsf)
                             for soonest_rses_item in soonest_rses:
                                 soonest_rse, t_start = soonest_rses_item
                                 if (soonest_rse >= 0):
@@ -670,7 +667,7 @@ class Simulation():
                                         'rsf-rse'
                                     ])
                                 else:
-                                    avail_parks = self.look_for_available_park(available_vhecles, t, rsf_target_time, soonest_rsf)
+                                    avail_parks = self.look_for_available_park(available_vhecles, t_rel, rsf_target_time, soonest_rsf)
                                     for avail_parks_item in avail_parks:
                                         available_park, available_time = avail_parks_item
                                         if (available_park >= 0):
@@ -686,11 +683,11 @@ class Simulation():
                                             # update time
                                             pass
                         else:
-                            soonest_rses = self.look_for_soonest_rse(available_vhecles, t, rsf_target_time, demands, soonest_rsf)
+                            soonest_rses = self.look_for_soonest_rse(available_vhecles, t_rel, rsf_target_time, demands, soonest_rsf)
                             for soonest_rses_item in soonest_rses:
                                 soonest_rse, rse_target_time = soonest_rses_item
                                 if (soonest_rse >= 0):
-                                    release_parks = self.look_for_park_can_release(available_vhecles, t, rse_target_time, soonest_rse)
+                                    release_parks = self.look_for_park_can_release(available_vhecles, t_rel, rse_target_time, soonest_rse)
                                     for release_parks_item in release_parks:
                                         can_release, can_release_time = release_parks_item
                                         if (can_release >= 0):
@@ -708,32 +705,31 @@ class Simulation():
                                 else:
                                     # no more feasible path
                                     pass
-                    print(t, path_list)
 
-                for i_j in i_j_list:
-                    i = i_j[0]
-                    j = i_j[1]
-                    if (i != j and demands[t][i][j]):
-                        t_tmp = t + self.S_traveltimes[i][j]
-                        if (t_tmp > self.TIME):
-                            time_over += 1
-                        else:
-                            if (available_vhecles[i][t] == 0):
-                                rse += demands[t][i][j]
-                            if (available_vhecles[j][t_tmp] == self.S_capacities[j]):
-                                rsf += demands[t][i][j]
-                            if ((available_vhecles[i][t] != 0) and (available_vhecles[j][t_tmp] != self.S_capacities[j])):
-                                can_contract, rsf_tmp, rse_tmp = self.caluculate_contract(
-                                    available_vhecles[i][t],
-                                    available_vhecles[j][t_tmp],
-                                    self.S_capacities[j],
-                                    demands[t][i][j],
-                                    t
-                                )
-                                rsf += rsf_tmp
-                                rse += rse_tmp
-                                available_vhecles = self.move_cars(available_vhecles, i, j, t, t_tmp, can_contract)
-                                success += can_contract
+            for i_j in i_j_list:
+                i = i_j[0]
+                j = i_j[1]
+                if (i != j and demands[t][i][j]):
+                    t_tmp = t + self.S_traveltimes[i][j]
+                    if (t_tmp > self.TIME):
+                        time_over += 1
+                    else:
+                        if (available_vhecles[i][t] == 0):
+                            rse += demands[t][i][j]
+                        if (available_vhecles[j][t_tmp] == self.S_capacities[j]):
+                            rsf += demands[t][i][j]
+                        if ((available_vhecles[i][t] != 0) and (available_vhecles[j][t_tmp] != self.S_capacities[j])):
+                            can_contract, rsf_tmp, rse_tmp = self.caluculate_contract(
+                                available_vhecles[i][t],
+                                available_vhecles[j][t_tmp],
+                                self.S_capacities[j],
+                                demands[t][i][j],
+                                t
+                            )
+                            rsf += rsf_tmp
+                            rse += rse_tmp
+                            available_vhecles = self.move_cars(available_vhecles, i, j, t, t_tmp, can_contract)
+                            success += can_contract
 
             self.write_matrix(
                 [np.array(demands).sum(), rsf, rse, success, time_over, relocation_rsf_rse, relocation_rsf_avail, relocation_rse_release],
