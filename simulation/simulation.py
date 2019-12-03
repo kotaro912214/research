@@ -33,7 +33,8 @@ class Simulation():
         'ELASTIC_VHECLES': -1,
         'MU': -2.15,
         'SIGMA': 1.27,
-        'SIGNIFICANT_DIGIT': 3
+        'SIGNIFICANT_DIGIT': 3,
+        'W_T': 0.1
     }):
         if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')
@@ -62,6 +63,7 @@ class Simulation():
         self.x_lim = []
         self.y_lim = []
         self.moves = []
+        self.W_T = params['W_T']
         if (not Path(self.sub_dir_path).exists()):
             Path(self.sub_dir_path).mkdir()
             print("make sub directory")
@@ -640,7 +642,6 @@ class Simulation():
         return cost
 
     def get_new_cost(self, available_vhecles, demands, start, goal, t_start, t_goal, mode):
-        w_t = 0.1
         E_table = {
             'rsf-rse': [2, t_start + 1],
             'rsf-avail': [1, t_start + 1],
@@ -669,7 +670,7 @@ class Simulation():
         if (E - G + 1 <= 0):
             cost = 100
         else:
-            cost = 1 / (E - G + 1) + delta + w_t * self.S_traveltimes[start][goal]
+            cost = 1 / (E - G + 1) + delta + self.W_T * self.S_traveltimes[start][goal]
         return cost
 
     # @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))

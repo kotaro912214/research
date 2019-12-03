@@ -97,7 +97,8 @@ check_cost = Simulation(params={
     'ELASTIC_VHECLES': -1,
     'MU': -1.15,
     'SIGMA': 1.27,
-    'SIGNIFICANT_DIGIT': 4
+    'SIGNIFICANT_DIGIT': 4,
+    'W_T': 0.1
 })
 
 check_cost.get_all_datas()
