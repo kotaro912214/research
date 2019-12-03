@@ -639,6 +639,39 @@ class Simulation():
             cost = 1 / (E - G + 1) + delta
         return cost
 
+    def get_new_cost(self, available_vhecles, demands, start, goal, t_start, t_goal, mode):
+        w_t = 0.1
+        E_table = {
+            'rsf-rse': [2, t_start + 1],
+            'rsf-avail': [1, t_start + 1],
+            'rse-release': [1, t_goal]
+        }
+        E = E_table[mode][0]
+        t_e = E_table[mode][1]
+        G = 0
+        t_g = 100
+        make_rse = 1 - available_vhecles[start][t_start + 1]
+        for j in range(self.NUMBER_OF_STATIONS):
+            if (demands[t_start + 1][start][j]):
+                make_rse += demands[t_start + 1][start][j]
+                t_g = min([t_g, t_start + 1])
+        if (make_rse > 0):
+            G += make_rse
+        make_rsf = 1 + available_vhecles[goal][t_goal] - self.S_capacities[goal]
+        for i in range(self.NUMBER_OF_STATIONS):
+            for t in range(t_start, t_goal - self.S_traveltimes[i][goal] + 1):
+                if (demands[t][i][goal]):
+                    make_rsf += demands[t][i][goal]
+                    t_g = min([t_g, t])
+        if (make_rsf > 0):
+            G += make_rsf
+        delta = (G / (t_g + 1)) - (E / (t_e + 1))
+        if (E - G + 1 <= 0):
+            cost = 100
+        else:
+            cost = 1 / (E - G + 1) + delta + w_t * self.S_traveltimes[start][goal]
+        return cost
+
     # @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
     def excute(self):
         available_vhecles = self.make_available_vhecles()
