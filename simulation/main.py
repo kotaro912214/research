@@ -87,11 +87,11 @@ def check_capa_and_vhecle_ratio():
 
 check_cost = Simulation(params={
     'NUMBER_OF_EMPLOYEES': 1,
-    'TIME': 15,
+    'TIME': 30,
     'NUMBER_OF_STATIONS': 3,
     'SELECT_RATIO': 5,
     'CONFIG_NAME': 'check_cost',
-    'MAKE_RANDOM_DEMANDS': True,
+    'MAKE_RANDOM_DEMANDS': False,
     'RELOCATE': True,
     'CONTINUOUS_TIME': False,
     'ELASTIC_VHECLES': -1,
@@ -102,4 +102,4 @@ check_cost = Simulation(params={
 
 check_cost.get_all_datas()
 check_cost.excute()
-# check_cost.draw_vhecle_transitflow()
+check_cost.draw_vhecle_transitflow()
