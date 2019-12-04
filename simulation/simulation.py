@@ -458,27 +458,18 @@ class Simulation():
         else:
             print('there is no vhecle that can be release.', i, j, t_start, t_goal)
 
-    def make_station_usage_stats(self):
-        self.S_usage_stats = np.zeros((self.NUMBER_OF_STATIONS, self.TIME + 1))
-        for i in range(self.NUMBER_OF_STATIONS):
-            self.S_usage_stats[i][0] = my_round(self.S_vhecles[i] / self.S_capacities[i], 2)
-
     def draw_vhecle_transitflow(self):
         list_for_df1 = []
         for i in range(len(self.V_relational_coords)):
-            t = 0
-            for col in self.V_relational_coords[i]:
-                list_for_df1.append(['car' + str(i), *col, t, 1])
-                t += 1
+            for t in range(self.TIME + 1):
+                list_for_df1.append(['car' + str(i), *self.V_relational_coords[i][t], t, 1])
         list_for_df2 = []
         for i in range(self.NUMBER_OF_STATIONS):
-            t = 0
-            for col in self.S_usage_stats[i]:
+            for t in range(self.TIME + 1):
                 if (i in self.HUB_STATIONS):
                     list_for_df2.append(['stations' + str(i), *self.S_relational_coords[i], t, 10])
                 else:
                     list_for_df2.append(['stations' + str(i), *self.S_relational_coords[i], t, 5])
-                t += 1
         columns = ['type', 'y', 'x', 't', 'size']
         list_for_df = list_for_df1 + list_for_df2
         df = pd.DataFrame(data=list_for_df, columns=columns)
@@ -729,7 +720,6 @@ class Simulation():
         else:
             demands = self.make_random_demands(mode='poisson')
         self.make_vhecle_relational_coords()
-        self.make_station_usage_stats()
         rse = 0
         rsf = 0
         success = 0
@@ -751,7 +741,6 @@ class Simulation():
             i_j_list = []
             for i in range(self.NUMBER_OF_STATIONS):
                 available_vhecles_for_show[i][t] = available_vhecles[i][t]
-                self.S_usage_stats[i][t] = my_round(available_vhecles[i][t] / self.S_capacities[i], 2)
                 for j in range(self.NUMBER_OF_STATIONS):
                     if (i == j):
                         continue
