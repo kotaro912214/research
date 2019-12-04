@@ -34,7 +34,9 @@ class Simulation():
         'MU': -2.15,
         'SIGMA': 1.27,
         'SIGNIFICANT_DIGIT': 3,
-        'W_T': 0.1
+        'W_T': 0.1,
+        'HUB_STATIONS': [],
+        'LAMBDA': 0.05
     }):
         if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')
@@ -62,8 +64,10 @@ class Simulation():
         self.sub_dir_path = self.base_path / self.CONFIG_NAME
         self.x_lim = []
         self.y_lim = []
-        self.moves = []
+        self.moves = [['i', 'j', 't_start', 't_goal', 'current', 'mode']]
         self.W_T = params['W_T']
+        self.HUB_STATIONS = params['HUB_STATIONS']
+        self.LAMBDA = params['LAMBDA']
         if (not Path(self.sub_dir_path).exists()):
             Path(self.sub_dir_path).mkdir()
             print("make sub directory")
@@ -314,14 +318,22 @@ class Simulation():
             self.get_station_vhecles()
             self.get_all_datas()
 
-    def make_random_demands(self):
-        # demands = np.random.normal(loc=-2.15, scale=1.27, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
-        demands = np.random.normal(loc=self.MU, scale=self.SIGMA, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
-        demands = np.round(demands).astype('int')
+    def make_random_demands(self, mode='poisson'):
+        if (mode == 'poisson'):
+            demands = np.random.poisson(lam=self.LAMBDA, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+        else:
+            demands = np.random.normal(loc=self.MU, scale=self.SIGMA, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+            demands = np.round(demands).astype('int')
         for t in range(self.TIME + 1):
             for i in range(self.NUMBER_OF_STATIONS):
                 for j in range(self.NUMBER_OF_STATIONS):
-                    if (demands[t][i][j] <= 0 or i == j or t == self.TIME):
+                    if (any([
+                        demands[t][i][j] <= 0,
+                        i == j,
+                        t == self.TIME,
+                        j in self.HUB_STATIONS,
+                        i in self.HUB_STATIONS
+                    ])):
                         demands[t][i][j] = 0
         return demands
 
@@ -462,7 +474,10 @@ class Simulation():
         for i in range(self.NUMBER_OF_STATIONS):
             t = 0
             for col in self.S_usage_stats[i]:
-                list_for_df2.append(['stations' + str(i), *self.S_relational_coords[i], t, 5])
+                if (i in self.HUB_STATIONS):
+                    list_for_df2.append(['stations' + str(i), *self.S_relational_coords[i], t, 10])
+                else:
+                    list_for_df2.append(['stations' + str(i), *self.S_relational_coords[i], t, 5])
                 t += 1
         columns = ['type', 'y', 'x', 't', 'size']
         list_for_df = list_for_df1 + list_for_df2
@@ -523,11 +538,12 @@ class Simulation():
         t,
         t_tmp,
         can_contract,
-        current
+        current,
+        mode='demand'
     ):
         available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
-        self.moves.append([i, j, t, t_tmp, current])
+        self.moves.append([i, j, t, t_tmp, current, mode])
         for _ in range(can_contract):
             self.update_vhecle_relational_coords(i, j, t, t_tmp)
         return available_vhecles
@@ -673,16 +689,45 @@ class Simulation():
             cost = 1 / (E - G + 1) + delta + self.W_T * self.S_traveltimes[start][goal]
         return cost
 
+    def return_hub_vhecles(self, available_vhecles, demands, t):
+        hub = self.HUB_STATIONS[0]
+        for h in self.HUB_STATIONS:
+            if (available_vhecles[h][t] < available_vhecles[hub][t]):
+                hub = h
+        if (t == self.TIME):
+            return available_vhecles
+        if (available_vhecles[hub][t] >= self.S_capacities[hub] - 1):
+            return available_vhecles
+        can_release_list = [0] * self.NUMBER_OF_STATIONS
+        for i in range(self.NUMBER_OF_STATIONS):
+            if (i != hub):
+                can_release_list[i] = available_vhecles[i][t]
+                for j in range(self.NUMBER_OF_STATIONS):
+                    can_release_list[i] -= demands[t][i][j]
+        pool = can_release_list.index(max(can_release_list))
+        if (pool > 0):
+            available_vhecles = self.move_cars(
+                available_vhecles,
+                pool,
+                hub,
+                t,
+                t + self.S_traveltimes[pool][hub],
+                1,
+                t,
+                'return_to_hub'
+            )
+        return available_vhecles
+
     # @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
     def excute(self):
         available_vhecles = self.make_available_vhecles()
         available_vhecles_for_show = self.make_available_vhecles()
         if (self.MAKE_RANDOM_DEMANDS):
-            demands = self.make_random_demands()
+            demands = self.make_random_demands(mode='poisson')
         elif (self.is_file_exist(self.sub_dir_path / 'demands.csv')):
             demands = self.read_demands()
         else:
-            demands = self.make_random_demands()
+            demands = self.make_random_demands(mode='poisson')
         self.make_vhecle_relational_coords()
         self.make_station_usage_stats()
         rse = 0
@@ -786,7 +831,14 @@ class Simulation():
                                 )
                             )
                         sorted(path_list, key=lambda x: x[5])
-                        available_vhecles = self.move_cars(available_vhecles, *path_list[0][:4], 1, t)
+                        available_vhecles = self.move_cars(available_vhecles, *path_list[0][:4], 1, t, path_list[0][4])
+
+            if (len(self.HUB_STATIONS)):
+                available_vhecles = self.return_hub_vhecles(
+                    available_vhecles,
+                    demands,
+                    t
+                )
 
             for i_j in i_j_list:
                 i = i_j[0]
@@ -796,22 +848,17 @@ class Simulation():
                     if (t_tmp > self.TIME):
                         time_over += 1
                     else:
-                        if (available_vhecles[i][t] == 0):
-                            rse += demands[t][i][j]
-                        if (available_vhecles[j][t_tmp] == self.S_capacities[j]):
-                            rsf += demands[t][i][j]
-                        if ((available_vhecles[i][t] != 0) and (available_vhecles[j][t_tmp] != self.S_capacities[j])):
-                            can_contract, rsf_tmp, rse_tmp = self.caluculate_contract(
-                                available_vhecles[i][t],
-                                available_vhecles[j][t_tmp],
-                                self.S_capacities[j],
-                                demands[t][i][j],
-                                t
-                            )
-                            rsf += rsf_tmp
-                            rse += rse_tmp
-                            available_vhecles = self.move_cars(available_vhecles, i, j, t, t_tmp, can_contract, t)
-                            success += can_contract
+                        can_contract, rsf_tmp, rse_tmp = self.caluculate_contract(
+                            available_vhecles[i][t],
+                            available_vhecles[j][t_tmp],
+                            self.S_capacities[j],
+                            demands[t][i][j],
+                            t
+                        )
+                        rsf += rsf_tmp
+                        rse += rse_tmp
+                        available_vhecles = self.move_cars(available_vhecles, i, j, t, t_tmp, can_contract, t)
+                        success += can_contract
 
             self.write_matrix(
                 [np.array(demands).sum(), rsf, rse, success, time_over, relocation_rsf_rse, relocation_rsf_avail, relocation_rse_release],

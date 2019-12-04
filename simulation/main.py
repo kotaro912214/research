@@ -87,18 +87,20 @@ def check_capa_and_vhecle_ratio():
 
 check_cost = Simulation(params={
     'NUMBER_OF_EMPLOYEES': 1,
-    'TIME': 120,
+    'TIME': 30,
     'NUMBER_OF_STATIONS': 5,
-    'SELECT_RATIO': 5,
+    'SELECT_RATIO': 1,
     'CONFIG_NAME': 'hub_function',
-    'MAKE_RANDOM_DEMANDS': False,
+    'MAKE_RANDOM_DEMANDS': True,
     'RELOCATE': True,
-    'CONTINUOUS_TIME': True,
+    'CONTINUOUS_TIME': False,
     'ELASTIC_VHECLES': -1,
     'MU': -2.15,
     'SIGMA': 1.27,
     'SIGNIFICANT_DIGIT': 4,
-    'W_T': 0.1
+    'W_T': 0.1,
+    'HUB_STATIONS': [1],
+    'LAMBDA': 0.03
 })
 
 check_cost.get_all_datas()
