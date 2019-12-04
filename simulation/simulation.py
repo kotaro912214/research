@@ -842,11 +842,12 @@ class Simulation():
             self.sub_dir_path / 'success.csv',
             mode='a'
         )
-        self.write_matrix(
-            self.moves,
-            self.sub_dir_path / 'moves.csv',
-            mode='a'
-        )
+        if (len(self.moves)):
+            self.write_matrix(
+                self.moves,
+                self.sub_dir_path / 'moves.csv',
+                mode='a'
+            )
         if (self.MAKE_RANDOM_DEMANDS):
             for demand in demands:
                 self.write_matrix(
