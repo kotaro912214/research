@@ -86,7 +86,7 @@ def check_capa_and_vhecle_ratio():
 # check_v_coords.draw_vhecle_transitflow()
 
 check_cost = Simulation(params={
-    'NUMBER_OF_EMPLOYEES': 2,
+    'NUMBER_OF_EMPLOYEES': 4,
     'TIME': 30,
     'NUMBER_OF_STATIONS': 5,
     'SELECT_RATIO': 1,

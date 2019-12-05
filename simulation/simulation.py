@@ -342,7 +342,7 @@ class Simulation():
         demands = self.read_matrix(demads_file_path)
         new_demands = []
         for i in range((self.TIME + 1) * (self.NUMBER_OF_STATIONS + 1)):
-            if (demands[i] != ['-' * (self.NUMBER_OF_STATIONS * 2)]):
+            if ('-' not in demands[i][0]):
                 new_demands.append(demands[i])
         threeD_demands = [None] * (self.TIME + 1)
         for t in range(self.TIME + 1):
@@ -534,7 +534,8 @@ class Simulation():
     ):
         available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
-        self.moves.append([i, j, t, t_tmp, current, mode])
+        if (can_contract):
+            self.moves.append([i, j, t, t_tmp, current, mode])
         for _ in range(can_contract):
             self.update_vhecle_relational_coords(i, j, t, t_tmp)
         return available_vhecles
@@ -768,7 +769,7 @@ class Simulation():
                                         soonest_rsf,
                                         soonest_rse,
                                         t_start,
-                                        t + self.S_traveltimes[soonest_rsf][soonest_rse],
+                                        t_start + self.S_traveltimes[soonest_rsf][soonest_rse],
                                         'rsf-rse'
                                     ])
                                 else:
@@ -801,7 +802,7 @@ class Simulation():
                                                 can_release,
                                                 soonest_rse,
                                                 can_release_time,
-                                                t + self.S_traveltimes[can_release][soonest_rse],
+                                                can_release_time + self.S_traveltimes[can_release][soonest_rse],
                                                 'rse-release'
                                             ])
                                         else:
@@ -819,7 +820,7 @@ class Simulation():
                                     *path
                                 )
                             )
-                        sorted(path_list, key=lambda x: x[5])
+                        path_list = sorted(path_list, key=lambda x: x[5])
                         available_vhecles = self.move_cars(available_vhecles, *path_list[0][:4], 1, t, path_list[0][4])
 
             if (len(self.HUB_STATIONS)):
@@ -859,23 +860,20 @@ class Simulation():
             success_list.append(success)
         if (self.is_file_exist(self.sub_dir_path / ('available_vhecles.csv'))):
             Path(self.sub_dir_path / ('available_vhecles.csv')).unlink()
+        available_vhecles_for_show = np.insert(available_vhecles_for_show, 0, np.arange(self.TIME + 1), axis=0)
         self.write_matrix(
             available_vhecles_for_show,
             self.sub_dir_path / 'available_vhecles.csv'
         )
+        new_result = [
+            ['item'] + np.arange(self.TIME + 1).tolist(),
+            ['rsf'] + rsf_list,
+            ['rse'] + rse_list,
+            ['success'] + success_list
+        ]
         self.write_matrix(
-            rsf_list,
-            self.sub_dir_path / 'rsf.csv',
-            mode='a'
-        )
-        self.write_matrix(
-            rse_list,
-            self.sub_dir_path / 'rse.csv',
-            mode='a'
-        )
-        self.write_matrix(
-            success_list,
-            self.sub_dir_path / 'success.csv',
+            new_result,
+            self.sub_dir_path / 'new_result.csv',
             mode='a'
         )
         if (len(self.moves)):
@@ -885,14 +883,16 @@ class Simulation():
                 mode='a'
             )
         if (self.MAKE_RANDOM_DEMANDS):
-            for demand in demands:
+            for index, demand in enumerate(demands):
                 self.write_matrix(
                     demand,
                     self.sub_dir_path / 'demands.csv',
                     mode='a'
                 )
+                line = '-' * (self.NUMBER_OF_STATIONS * 2)
+                line = str(index) + line[1:]
                 self.write_matrix(
-                    ['-' * (self.NUMBER_OF_STATIONS * 2)],
+                    [line],
                     self.sub_dir_path / 'demands.csv',
                     mode='a'
                 )
