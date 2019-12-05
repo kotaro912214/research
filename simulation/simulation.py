@@ -28,6 +28,7 @@ class Simulation():
         'SELECT_RATIO': 2,
         'CONFIG_NAME': 'default',
         'MAKE_RANDOM_DEMANDS': True,
+        'RANDOM_MODE': 'poisson',
         'RELOCATE': True,
         'CONTINUOUS_TIME': True,
         'ELASTIC_VHECLES': -1,
@@ -68,6 +69,7 @@ class Simulation():
         self.W_T = params['W_T']
         self.HUB_STATIONS = params['HUB_STATIONS']
         self.LAMBDA = params['LAMBDA']
+        self.RANDOM_MODE = params['RANDOM_MODE']
         if (not Path(self.sub_dir_path).exists()):
             Path(self.sub_dir_path).mkdir()
             print("make sub directory")
@@ -318,7 +320,7 @@ class Simulation():
             self.get_station_vhecles()
             self.get_all_datas()
 
-    def make_random_demands(self, mode='poisson'):
+    def make_random_demands(self, mode):
         if (mode == 'poisson'):
             demands = np.random.poisson(lam=self.LAMBDA, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
         else:
@@ -488,7 +490,7 @@ class Simulation():
     def caluculate_contract(
         self,
         available_vhecles_start,
-        available_vhecles_target,
+        available_vhecles_goal,
         capacity_target,
         demand,
         t
@@ -497,26 +499,26 @@ class Simulation():
         rsf = 0
         if (available_vhecles_start >= demand):
             # all vhecles are available in i
-            if (available_vhecles_target + demand <= capacity_target):
+            if (available_vhecles_goal + demand <= capacity_target):
                 # parking is available
                 can_contract = demand
             else:
                 # parking is not available
-                can_contract = capacity_target - available_vhecles_target
-                rsf += (available_vhecles_target + demand - capacity_target)
+                can_contract = capacity_target - available_vhecles_goal
+                rsf += (available_vhecles_goal + demand - capacity_target)
         else:
             # all vhecles are not available in i
-            if (available_vhecles_target + demand <= capacity_target):
+            if (available_vhecles_goal + demand <= capacity_target):
                 # parking is available
                 can_contract = available_vhecles_start
                 rse += (demand - available_vhecles_start)
             else:
                 # parking is not available
                 can_contract = min([
-                    capacity_target - available_vhecles_target,
+                    capacity_target - available_vhecles_goal,
                     available_vhecles_start
                 ])
-                rsf += (available_vhecles_target + demand - capacity_target)
+                rsf += (available_vhecles_goal + demand - capacity_target)
                 rse += (demand - available_vhecles_start)
         return [can_contract, rsf, rse]
 
@@ -715,11 +717,11 @@ class Simulation():
         available_vhecles = self.make_available_vhecles()
         available_vhecles_for_show = self.make_available_vhecles()
         if (self.MAKE_RANDOM_DEMANDS):
-            demands = self.make_random_demands(mode='poisson')
+            demands = self.make_random_demands(mode=self.RANDOM_MODE)
         elif (self.is_file_exist(self.sub_dir_path / 'demands.csv')):
             demands = self.read_demands()
         else:
-            demands = self.make_random_demands(mode='poisson')
+            demands = self.make_random_demands(mode=self.RANDOM_MODE)
         self.make_vhecle_relational_coords()
         rse = 0
         rsf = 0
