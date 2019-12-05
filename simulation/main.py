@@ -92,6 +92,7 @@ check_cost = Simulation(params={
     'SELECT_RATIO': 1,
     'CONFIG_NAME': 'hub_function',
     'MAKE_RANDOM_DEMANDS': False,
+    'RANDOM_MODE': 'poisson',
     'RELOCATE': True,
     'CONTINUOUS_TIME': False,
     'ELASTIC_VHECLES': -1,
