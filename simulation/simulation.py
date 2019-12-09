@@ -42,7 +42,8 @@ class Simulation():
         'SIGNIFICANT_DIGIT': 3,
         'W_T': 0.1,
         'HUB_STATIONS': [],
-        'LAMBDA': 0.05
+        'LAMBDA': 0.05,
+        'DEMANDD_PATH': 'demands.csv'
     }):
         if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')
@@ -75,6 +76,7 @@ class Simulation():
         self.HUB_STATIONS = params['HUB_STATIONS']
         self.LAMBDA = params['LAMBDA']
         self.RANDOM_MODE = params['RANDOM_MODE']
+        self.DEMAND_PATH = params['DEMAND_PATH']
         if (not Path(self.sub_dir_path).exists()):
             Path(self.sub_dir_path).mkdir()
             print("make sub directory")
@@ -345,7 +347,7 @@ class Simulation():
         return demands
 
     def read_demands(self):
-        demads_file_path = self.base_path / 'demands.csv'
+        demads_file_path = self.base_path / self.DEMAND_PATH
         demands = self.read_matrix(demads_file_path)
         new_demands = []
         for i in range((self.TIME + 1) * (self.NUMBER_OF_STATIONS + 1)):
@@ -738,7 +740,7 @@ class Simulation():
         available_vhecles_for_show = self.make_available_vhecles()
         if (self.MAKE_RANDOM_DEMANDS):
             demands = self.make_random_demands(mode=self.RANDOM_MODE)
-        elif (self.is_file_exist(self.base_path / 'demands.csv')):
+        elif (self.is_file_exist(self.base_path / self.DEMAND_PATH)):
             demands = self.read_demands()
         else:
             demands = self.make_random_demands(mode=self.RANDOM_MODE)

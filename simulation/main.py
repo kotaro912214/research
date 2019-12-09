@@ -85,27 +85,28 @@ def check_capa_and_vhecle_ratio():
 # check_v_coords.excute()
 # check_v_coords.draw_vhecle_transitflow()
 
-one_one = Simulation(params={
-    'NUMBER_OF_EMPLOYEES': 1,
-    'TIME': 60*4,
-    'NUMBER_OF_STATIONS': 10,
-    'SELECT_RATIO': 3,
-    'CONFIG_NAME': '1.1',
-    'MAKE_RANDOM_DEMANDS': False,
-    'RANDOM_MODE': 'poisson',
-    'RELOCATE': False,
-    'CONTINUOUS_TIME': False,
-    'ELASTIC_VHECLES': -1,
-    'MU': -2.15,
-    'SIGMA': 1.27,
-    'SIGNIFICANT_DIGIT': 4,
-    'W_T': 0.1,
-    'HUB_STATIONS': [],
-    'LAMBDA': 0.003
-})
+# one_one = Simulation(params={
+#     'NUMBER_OF_EMPLOYEES': 1,
+#     'TIME': 60*4,
+#     'NUMBER_OF_STATIONS': 10,
+#     'SELECT_RATIO': 3,
+#     'CONFIG_NAME': '1.1',
+#     'MAKE_RANDOM_DEMANDS': False,
+#     'RANDOM_MODE': 'poisson',
+#     'RELOCATE': False,
+#     'CONTINUOUS_TIME': False,
+#     'ELASTIC_VHECLES': -1,
+#     'MU': -2.15,
+#     'SIGMA': 1.27,
+#     'SIGNIFICANT_DIGIT': 4,
+#     'W_T': 0.1,
+#     'HUB_STATIONS': [],
+#     'LAMBDA': 0.003,
+#     'DEMAND_PATH': ''
+# })
 
-one_one.get_all_datas()
-one_one.excute()
+# one_one.get_all_datas()
+# one_one.excute()
 
 # one_two = Simulation(params={
 #     'NUMBER_OF_EMPLOYEES': 1,
@@ -123,7 +124,8 @@ one_one.excute()
 #     'SIGNIFICANT_DIGIT': 4,
 #     'W_T': 0.1,
 #     'HUB_STATIONS': [],
-#     'LAMBDA': 0.003
+#     'LAMBDA': 0.003,
+#     'DEMAND_PATH': ''
 # })
 
 # one_two.get_all_datas()
@@ -145,7 +147,8 @@ one_one.excute()
 #     'SIGNIFICANT_DIGIT': 4,
 #     'W_T': 0.1,
 #     'HUB_STATIONS': [],
-#     'LAMBDA': 0.003
+#     'LAMBDA': 0.003,
+#     'DEMAND_PATH': ''
 # })
 
 # two_one.get_all_datas()
@@ -167,7 +170,8 @@ one_one.excute()
 #     'SIGNIFICANT_DIGIT': 4,
 #     'W_T': 0.1,
 #     'HUB_STATIONS': [],
-#     'LAMBDA': 0.003
+#     'LAMBDA': 0.003,
+#     'DEMAND_PATH': ''
 # })
 
 # two_two_one.get_all_datas()
@@ -189,7 +193,8 @@ one_one.excute()
 #     'SIGNIFICANT_DIGIT': 4,
 #     'W_T': 0.1,
 #     'HUB_STATIONS': [1],
-#     'LAMBDA': 0.003
+#     'LAMBDA': 0.003,
+#     'DEMAND_PATH': ''
 # })
 
 # two_two_two.get_all_datas()
