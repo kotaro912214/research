@@ -144,7 +144,7 @@ def excute_simulation(
     lambda_value
 ):
     if (n_clicks > 0):
-        ins5 = Simulation(params={
+        sim1 = Simulation(params={
             'TIME': int(time),
             'NUMBER_OF_STATIONS': int(number_of_stations),
             'NUMBER_OF_EMPLOYEES': int(number_of_employees),
@@ -162,9 +162,9 @@ def excute_simulation(
             'HUB_STATIONS': [int(hub_stations)],
             'LAMBDA': float(lambda_value)
         })
-        ins5.get_all_datas()
-        ins5.excute()
-        df = ins5.draw_vhecle_transitflow()
+        sim1.get_all_datas()
+        sim1.excute()
+        df = sim1.draw_vhecle_transitflow(mode='dash')
         return json.dumps(df.to_json())
     else:
         raise dash.exceptions.PreventUpdate
