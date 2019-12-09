@@ -345,7 +345,7 @@ class Simulation():
         return demands
 
     def read_demands(self):
-        demads_file_path = self.sub_dir_path / 'demands.csv'
+        demads_file_path = self.base_path / 'demands.csv'
         demands = self.read_matrix(demads_file_path)
         new_demands = []
         for i in range((self.TIME + 1) * (self.NUMBER_OF_STATIONS + 1)):
@@ -492,39 +492,46 @@ class Simulation():
         plotly.offline.plot(fig)
 
     # @pysnooper.snoop('./log.log', prefix='calc_contract ', max_variable_length=500)
-    def caluculate_contract(
+    def calculate_contract(
         self,
-        available_vhecles_start,
-        available_vhecles_goal,
-        capacity_target,
-        demand,
-        t
+        available_vhecles,
+        i,
+        j,
+        t_start,
+        t_goal,
+        demand
     ):
         rse = 0
         rsf = 0
-        if (available_vhecles_start >= demand):
+        if (available_vhecles[i][t_start] >= demand):
             # all vhecles are available in i
-            if (available_vhecles_goal + demand <= capacity_target):
+            is_all_available = []
+            for t in range(t_goal, self.TIME + 1):
+                is_all_available.append(available_vhecles[j][t] + demand <= self.S_capacities[j])
+            if (all(is_all_available)):
                 # parking is available
                 can_contract = demand
             else:
                 # parking is not available
-                can_contract = capacity_target - available_vhecles_goal
-                rsf += (available_vhecles_goal + demand - capacity_target)
+                can_contract = self.S_capacities[j] - max(available_vhecles[j][t_goal:])
+                rsf += (max(available_vhecles[j][t_goal:]) + demand - self.S_capacities[j])
         else:
             # all vhecles are not available in i
-            if (available_vhecles_goal + demand <= capacity_target):
+            is_all_available = []
+            for t in range(t_goal, self.TIME + 1):
+                is_all_available.append(available_vhecles[j][t] + demand <= self.S_capacities[j])
+            if (all(is_all_available)):
                 # parking is available
-                can_contract = available_vhecles_start
-                rse += (demand - available_vhecles_start)
+                can_contract = available_vhecles[i][t_start]
+                rse += (demand - available_vhecles[i][t_start])
             else:
                 # parking is not available
                 can_contract = min([
-                    capacity_target - available_vhecles_goal,
-                    available_vhecles_start
+                    self.S_capacities[j] - max(available_vhecles[j][t_goal:]),
+                    available_vhecles[i][t_start]
                 ])
-                rsf += (available_vhecles_goal + demand - capacity_target)
-                rse += (demand - available_vhecles_start)
+                rsf += (max(available_vhecles[j][t_goal:]) + demand - self.S_capacities[j])
+                rse += (demand - available_vhecles[i][t_start])
         return [can_contract, rsf, rse]
 
     # @pysnooper.snoop('./log.log', prefix='move_cars ', max_variable_length=1000)
@@ -693,9 +700,7 @@ class Simulation():
         for h in self.HUB_STATIONS:
             if (available_vhecles[h][t] < available_vhecles[hub][t]):
                 hub = h
-        if (t == self.TIME):
-            return available_vhecles
-        if (available_vhecles[hub][t] >= self.S_capacities[hub] - 1):
+        if (t == self.TIME or available_vhecles[hub][t] >= self.S_capacities[hub] - 1):
             return available_vhecles
         can_release_list = [0] * self.NUMBER_OF_STATIONS
         for i in range(self.NUMBER_OF_STATIONS):
@@ -704,14 +709,24 @@ class Simulation():
                 for j in range(self.NUMBER_OF_STATIONS):
                     can_release_list[i] -= demands[t][i][j]
         pool = can_release_list.index(max(can_release_list))
+        if (t + self.S_traveltimes[pool][hub] > self.TIME):
+            return available_vhecles
         if (pool > 0):
+            can_contract, _, __ = self.calculate_contract(
+                available_vhecles,
+                pool,
+                hub,
+                t,
+                t + self.S_traveltimes[pool][hub],
+                1
+            )
             available_vhecles = self.move_cars(
                 available_vhecles,
                 pool,
                 hub,
                 t,
                 t + self.S_traveltimes[pool][hub],
-                1,
+                can_contract,
                 t,
                 'return_to_hub'
             )
@@ -723,7 +738,7 @@ class Simulation():
         available_vhecles_for_show = self.make_available_vhecles()
         if (self.MAKE_RANDOM_DEMANDS):
             demands = self.make_random_demands(mode=self.RANDOM_MODE)
-        elif (self.is_file_exist(self.sub_dir_path / 'demands.csv')):
+        elif (self.is_file_exist(self.base_path / 'demands.csv')):
             demands = self.read_demands()
         else:
             demands = self.make_random_demands(mode=self.RANDOM_MODE)
@@ -845,12 +860,13 @@ class Simulation():
                     if (t_tmp > self.TIME):
                         time_over += 1
                     else:
-                        can_contract, rsf_tmp, rse_tmp = self.caluculate_contract(
-                            available_vhecles[i][t],
-                            available_vhecles[j][t_tmp],
-                            self.S_capacities[j],
-                            demands[t][i][j],
-                            t
+                        can_contract, rsf_tmp, rse_tmp = self.calculate_contract(
+                            available_vhecles,
+                            i,
+                            j,
+                            t,
+                            t_tmp,
+                            demands[t][i][j]
                         )
                         rsf += rsf_tmp
                         rse += rse_tmp
