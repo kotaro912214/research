@@ -1,4 +1,5 @@
 from simulation import Simulation
+# from prev_simulation import Simulation
 
 
 def check_time_config_affection():
@@ -199,3 +200,47 @@ def check_capa_and_vhecle_ratio():
 
 # two_two_two.get_all_datas()
 # two_two_two.excute()
+
+
+test_experiment = Simulation(params={
+    'NUMBER_OF_EMPLOYEES': 1,
+    'TIME': 60 * 4,
+    'NUMBER_OF_STATIONS': 10,
+    'SELECT_RATIO': 1,
+    'CONFIG_NAME': 'test_experiment',
+    'MAKE_RANDOM_DEMANDS': True,
+    'RANDOM_MODE': 'poisson',
+    'RELOCATE': False,
+    'CONTINUOUS_TIME': True,
+    'ELASTIC_VHECLES': -1,
+    'MU': -2.15,
+    'SIGMA': 1.27,
+    'SIGNIFICANT_DIGIT': 4,
+    'W_T': 0.1,
+    'HUB_STATIONS': [],
+    'LAMBDA': 0.003,
+    'DEMAND_PATH': ''
+})
+
+test_experiment.get_all_datas()
+for i in range(10):
+    test_experiment.excute()
+
+# b = Simulation(params={
+#     'NUMBER_OF_EMPLOYEES': 1,
+#     'TIME': 4 * 60,
+#     'NUMBER_OF_STATIONS': 10,
+#     'SELECT_RATIO': 1,
+#     'CONFIG_NAME': 'b',
+#     'MAKE_RANDOM_DEMANDS': True,
+#     'RELOCATE': True,
+#     'CONTINUOUS_TIME': True,
+#     'ELASTIC_VHECLES': -1,
+#     'MU': -1.15,
+#     # 'SIGMA': 0.604,
+#     'SIGMA': 0.7,
+#     'SIGNIFICANT_DIGIT': 4
+# })
+
+# b.get_all_datas()
+# b.excute()
