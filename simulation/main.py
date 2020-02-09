@@ -1,5 +1,7 @@
 from simulation import Simulation
 # from prev_simulation import Simulation
+import time
+import csv
 
 
 def check_time_config_affection():
@@ -202,45 +204,106 @@ def check_capa_and_vhecle_ratio():
 # two_two_two.excute()
 
 
-test_experiment = Simulation(params={
-    'NUMBER_OF_EMPLOYEES': 1,
-    'TIME': 60 * 4,
-    'NUMBER_OF_STATIONS': 10,
-    'SELECT_RATIO': 1,
-    'CONFIG_NAME': 'test_experiment',
-    'MAKE_RANDOM_DEMANDS': True,
-    'RANDOM_MODE': 'poisson',
-    'RELOCATE': False,
-    'CONTINUOUS_TIME': True,
-    'ELASTIC_VHECLES': -1,
-    'MU': -2.15,
-    'SIGMA': 1.27,
-    'SIGNIFICANT_DIGIT': 4,
-    'W_T': 0.1,
-    'HUB_STATIONS': [],
-    'LAMBDA': 0.003,
-    'DEMAND_PATH': ''
-})
+# for ns in range(5, 12):
+#     times = [str(ns)]
+#     for i in range(5):
+#         print(ns)
+#         test_experiment = Simulation(params={
+#             'NUMBER_OF_EMPLOYEES': 1,
+#             'TIME': 60 * 4,
+#             'NUMBER_OF_STATIONS': ns,
+#             'SELECT_RATIO': 1,
+#             'CONFIG_NAME': 'station' + str(ns),
+#             'MAKE_RANDOM_DEMANDS': True,
+#             'RANDOM_MODE': 'poisson',
+#             'RELOCATE': True,
+#             'CONTINUOUS_TIME': True,
+#             'ELASTIC_VHECLES': -1,
+#             'MU': -2.15,
+#             'SIGMA': 1.27,
+#             'SIGNIFICANT_DIGIT': 4,
+#             'W_T': 0.1,
+#             'HUB_STATIONS': [],
+#             'LAMBDA': 0.003,
+#             'DEMAND_PATH': '',
+#             'POPULATION': 10
+#         })
+#         test_experiment.get_all_datas()
+#         start = time.time()
+#         test_experiment.excute()
+#         times.append(time.time() - start)
+#     file = open('./tiimes.csv', 'a', encoding='utf-8')
+#     writer = csv.writer(file, lineterminator='\n')
+#     writer.writerow(times)
 
-test_experiment.get_all_datas()
-for i in range(10):
-    test_experiment.excute()
+# file.close()
 
-# b = Simulation(params={
-#     'NUMBER_OF_EMPLOYEES': 1,
-#     'TIME': 4 * 60,
-#     'NUMBER_OF_STATIONS': 10,
-#     'SELECT_RATIO': 1,
-#     'CONFIG_NAME': 'b',
-#     'MAKE_RANDOM_DEMANDS': True,
-#     'RELOCATE': True,
-#     'CONTINUOUS_TIME': True,
-#     'ELASTIC_VHECLES': -1,
-#     'MU': -1.15,
-#     # 'SIGMA': 0.604,
-#     'SIGMA': 0.7,
-#     'SIGNIFICANT_DIGIT': 4
-# })
+# cond = '5.4.1-E'
+# for i in range(5, 6):
+#     times = [str(i)]
+#     for _ in range(4):
+#         test_experiment = Simulation(params={
+#             'NUMBER_OF_EMPLOYEES': i,
+#             'TIME': 60 * 4,
+#             'NUMBER_OF_STATIONS': 10,
+#             'SELECT_RATIO': 1,
+#             'CONFIG_NAME': cond,
+#             'MAKE_RANDOM_DEMANDS': True,
+#             'RANDOM_MODE': 'poisson',
+#             'RELOCATE': True,
+#             'CONTINUOUS_TIME': True,
+#             'ELASTIC_VHECLES': -1,
+#             'MU': -2.15,
+#             'SIGMA': 1.27,
+#             'SIGNIFICANT_DIGIT': 4,
+#             'W_T': 0.1,
+#             'HUB_STATIONS': [],
+#             'LAMBDA': 0.003,
+#             'DEMAND_PATH': '',
+#             'POPULATION': 10,
+#             'USER_RELOCATE': False,
+#             'NEW_COST_FUNCTION': True
+#         })
+#         test_experiment.get_all_datas()
+#         start = time.time()
+#         test_experiment.excute()
+#         times.append(time.time() - start)
+#     file = open('./tiimes2.csv', 'a', encoding='utf-8')
+#     writer = csv.writer(file, lineterminator='\n')
+#     writer.writerow(times)
 
-# b.get_all_datas()
-# b.excute()
+
+cond = 'station5-U'
+for i in range(10, 16):
+    times = [str(i)]
+    for _ in range(1):
+        test_experiment = Simulation(params={
+            'NUMBER_OF_EMPLOYEES': 1,
+            'TIME': 60 * 4,
+            'NUMBER_OF_STATIONS': 5,
+            'SELECT_RATIO': 1,
+            'CONFIG_NAME': cond,
+            'MAKE_RANDOM_DEMANDS': True,
+            'RANDOM_MODE': 'poisson',
+            'RELOCATE': True,
+            'CONTINUOUS_TIME': True,
+            'ELASTIC_VHECLES': -1,
+            'MU': -2.15,
+            'SIGMA': 1.27,
+            'SIGNIFICANT_DIGIT': 4,
+            'W_T': 0.1,
+            'HUB_STATIONS': [],
+            'LAMBDA': 0.03,
+            'DEMAND_PATH': '',
+            'POPULATION': i,
+            'USER_RELOCATE': True,
+            'EMPLOYEE_RELOCATE': False,
+            'NEW_COST_FUNCTION': True
+        })
+        test_experiment.get_all_datas()
+        start = time.time()
+        test_experiment.excute()
+        times.append(time.time() - start)
+    file = open('./tiimes3.csv', 'a', encoding='utf-8')
+    writer = csv.writer(file, lineterminator='\n')
+    writer.writerow(times)

@@ -45,7 +45,11 @@ class Simulation():
         'W_T': 0.1,
         'HUB_STATIONS': [],
         'LAMBDA': 0.05,
-        'DEMANDD_PATH': 'demands.csv'
+        'DEMANDD_PATH': 'demands.csv',
+        'POPULATION': 10,
+        'USER_RELOCATE': False,
+        'EMPLOYEE_RELOCATE': False,
+        'NEW_COST_FUNCTION': True
     }):
         if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')
@@ -79,12 +83,18 @@ class Simulation():
         self.LAMBDA = params['LAMBDA']
         self.RANDOM_MODE = params['RANDOM_MODE']
         self.DEMAND_PATH = params['DEMAND_PATH']
+        self.POPULATION = params['POPULATION']
+        self.USER_RELOCATE = params['USER_RELOCATE']
+        self.EMPLOYEE_RELOCATE = params['EMPLOYEE_RELOCATE']
+        self.NEW_COST_FUNCTION = params['NEW_COST_FUNCTION']
+        self.users = Users(self.POPULATION, self.NUMBER_OF_STATIONS)
         if (not Path(self.sub_dir_path).exists()):
             Path(self.sub_dir_path).mkdir()
             print("make sub directory")
         else:
-            print(self.sub_dir_path.name, 'has already existed')
-            print('we alternatively use the directory')
+            # print(self.sub_dir_path.name, 'has already existed')
+            # print('we alternatively use the directory')
+            pass
         if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
@@ -550,12 +560,16 @@ class Simulation():
         current,
         mode='demand'
     ):
+        if (mode == 'user'):
+            self.travel_distances['user'] += self.S_distances[i][j]
+        elif (mode != 'demand'):
+            self.travel_distances['jockey'] += self.S_distances[i][j]
         available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
         available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
         if (can_contract):
             self.moves.append([i, j, t, t_tmp, current, mode])
-        for _ in range(can_contract):
-            self.update_vhecle_relational_coords(i, j, t, t_tmp)
+        # for _ in range(can_contract):
+        #     self.update_vhecle_relational_coords(i, j, t, t_tmp)
         return available_vhecles
 
     # @pysnooper.snoop('./log.log', prefix='rsf ', max_variable_length=1000)
@@ -567,6 +581,7 @@ class Simulation():
                     demands[current][i][j],
                     current + self.S_traveltimes[i][j] <= self.TIME,
                 ])):
+                    # 上の条件式が真のとき下の条件式でエラーがでてしまうためこのコメントの上下のif文は一つにできない
                     if (available_vhecles[j][current + self.S_traveltimes[i][j]] == self.S_capacities[j]):
                         soonest_rsfs.append([j, current + self.S_traveltimes[i][j]])
         if (len(soonest_rsfs)):
@@ -629,6 +644,7 @@ class Simulation():
             for i in range(self.NUMBER_OF_STATIONS):
                 if (t + self.S_traveltimes[i][rse] <= rse_target_time):
                     if (available_vhecles[i][t] > 0):
+                        # if (available_vhecles[i][t] > 0 and i != rse):これじゃだめ？
                         release_parks.append([i, t])
         if (len(release_parks)):
             return release_parks
@@ -736,6 +752,15 @@ class Simulation():
             )
         return available_vhecles
 
+    def can_user_relocation(self, start):
+        for i, location in enumerate(self.users.user_locations):
+            if (location == start):
+                p = np.random.rand()
+                if (self.users.user_transitionfunc[i] <= p):
+                    return True
+        else:
+            return False
+
     # @pysnooper.snoop('./log.log', prefix='excute ', max_variable_length=1500, watch=('available_vhecles'))
     def excute(self):
         available_vhecles = self.make_available_vhecles()
@@ -746,7 +771,7 @@ class Simulation():
             demands = self.read_demands()
         else:
             demands = self.make_random_demands(mode=self.RANDOM_MODE)
-        self.make_vhecle_relational_coords()
+        # self.make_vhecle_relational_coords()
         rse = 0
         rsf = 0
         success = 0
@@ -757,12 +782,13 @@ class Simulation():
         rsf_list = []
         rse_list = []
         success_list = []
+        self.travel_distances = {'user': 0, 'jockey': 0}
         result_file_path = self.sub_dir_path / 'result.csv'
-        self.write_matrix(
-            ['demands', 'rsf', 'rse', 'success', 'time_over', 'relocation_rsf_rse', 'relocation_rsf_avail', 'relocation_rse_release'],
-            result_file_path,
-            mode='a'
-        )
+        # self.write_matrix(
+        #     ['demands', 'rsf', 'rse', 'success', 'time_over', 'relocation_rsf_rse', 'relocation_rsf_avail', 'relocation_rse_release'],
+        #     result_file_path,
+        #     mode='a'
+        # )
 
         for t in range(self.TIME + 1):
             i_j_list = []
@@ -839,15 +865,27 @@ class Simulation():
                                     pass
                     if (len(path_list)):
                         for index, path in enumerate(path_list):
-                            path_list[index].append(
-                                self.get_previous_cost(
-                                    available_vhecles,
-                                    demands,
-                                    *path
+                            if (self.NEW_COST_FUNCTION):
+                                path_list[index].append(
+                                    self.get_new_cost(
+                                        available_vhecles,
+                                        demands,
+                                        *path
+                                    )
                                 )
-                            )
+                            else:
+                                path_list[index].append(
+                                    self.get_previous_cost(
+                                        available_vhecles,
+                                        demands,
+                                        *path
+                                    )
+                                )
                         path_list = sorted(path_list, key=lambda x: x[5])
-                        available_vhecles = self.move_cars(available_vhecles, *path_list[0][:4], 1, t, path_list[0][4])
+                        if (self.USER_RELOCATE and self.can_user_relocation(path_list[0][0])):
+                            available_vhecles = self.move_cars(available_vhecles, *path_list[0][:4], 1, t, 'user')
+                        elif (self.EMPLOYEE_RELOCATE):
+                            available_vhecles = self.move_cars(available_vhecles, *path_list[0][:4], 1, t, path_list[0][4])
 
             if (len(self.HUB_STATIONS)):
                 available_vhecles = self.return_hub_vhecles(
@@ -877,52 +915,63 @@ class Simulation():
                         available_vhecles = self.move_cars(available_vhecles, i, j, t, t_tmp, can_contract, t)
                         success += can_contract
 
-            self.write_matrix(
-                [np.array(demands).sum(), rsf, rse, success, time_over, relocation_rsf_rse, relocation_rsf_avail, relocation_rse_release],
-                result_file_path,
-                mode='a'
-            )
+            if (t == self.TIME):
+                self.write_matrix(
+                    [self.LAMBDA, np.array(demands).sum(), rsf, rse, success, time_over, relocation_rsf_rse, relocation_rsf_avail, relocation_rse_release],
+                    result_file_path,
+                    mode='a'
+                )
             rsf_list.append(rsf)
             rse_list.append(rse)
             success_list.append(success)
         if (self.is_file_exist(self.sub_dir_path / ('available_vhecles.csv'))):
             Path(self.sub_dir_path / ('available_vhecles.csv')).unlink()
         available_vhecles_for_show = np.insert(available_vhecles_for_show, 0, np.arange(self.TIME + 1), axis=0)
+        # self.write_matrix(
+        #     available_vhecles_for_show,
+        #     self.sub_dir_path / 'available_vhecles.csv'
+        # )
+        # new_result = [
+        #     ['item'] + np.arange(self.TIME + 1).tolist(),
+        #     ['rsf'] + rsf_list,
+        #     ['rse'] + rse_list,
+        #     ['success'] + success_list
+        # ]
+        # self.write_matrix(
+        #     new_result,
+        #     self.sub_dir_path / 'new_result.csv',
+        #     mode='a'
+        # )
         self.write_matrix(
-            available_vhecles_for_show,
-            self.sub_dir_path / 'available_vhecles.csv'
-        )
-        new_result = [
-            ['item'] + np.arange(self.TIME + 1).tolist(),
-            ['rsf'] + rsf_list,
-            ['rse'] + rse_list,
-            ['success'] + success_list
-        ]
-        self.write_matrix(
-            new_result,
-            self.sub_dir_path / 'new_result.csv',
+            [x for x in self.travel_distances.values()],
+            self.sub_dir_path / 'traevl_distances.csv',
             mode='a'
         )
-        if (len(self.moves)):
-            self.write_matrix(
-                self.moves,
-                self.sub_dir_path / 'moves.csv',
-                mode='a'
-            )
-        if (self.MAKE_RANDOM_DEMANDS):
-            for index, demand in enumerate(demands):
-                self.write_matrix(
-                    demand,
-                    self.sub_dir_path / 'demands.csv',
-                    mode='a'
-                )
-                line = '-' * (self.NUMBER_OF_STATIONS * 2)
-                line = str(index) + line[1:]
-                self.write_matrix(
-                    [line],
-                    self.sub_dir_path / 'demands.csv',
-                    mode='a'
-                )
+        # self.write_matrix(
+        #     self.users.user_locations,
+        #     self.sub_dir_path / 'user_locations.csv',
+        #     mode='w'
+        # )
+        # if (len(self.moves)):
+        #     self.write_matrix(
+        #         self.moves,
+        #         self.sub_dir_path / 'moves.csv',
+        #         mode='a'
+        #     )
+        # if (self.MAKE_RANDOM_DEMANDS):
+        #     for index, demand in enumerate(demands):
+        #         self.write_matrix(
+        #             demand,
+        #             self.sub_dir_path / 'demands.csv',
+        #             mode='a'
+        #         )
+        #         line = '-' * (self.NUMBER_OF_STATIONS * 2)
+        #         line = str(index) + line[1:]
+        #         self.write_matrix(
+        #             [line],
+        #             self.sub_dir_path / 'demands.csv',
+        #             mode='a'
+        #         )
 
 
 class Users():
@@ -930,10 +979,9 @@ class Users():
     def __init__(self, population, number_of_stations):
         self.POPULATION = population
         self.NUMBER_OF_STATIONS = number_of_stations
-        self.user_locations = [None] * self.POPULATION
-        for i in range(self.POPULATION):
-            self.user_locations[i] = np.random.randint(0, number_of_stations)
-        print(self.user_locations)
+        self.user_locations = np.random.randint(self.NUMBER_OF_STATIONS, size=self.POPULATION)
+        self.user_transitionfunc = np.random.rand(self.POPULATION)
+        self.user_transitionfunc_estimated = np.zeros((self.POPULATION))
 
 
 if (__name__ == '__main__'):

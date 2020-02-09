@@ -75,6 +75,7 @@ app.layout = html.Div([
     html.Div(id='tmp', style={'display': 'none'})
 ])
 
+
 @app.callback(
     [
         Output('input-time', 'value'),
@@ -98,9 +99,10 @@ app.layout = html.Div([
 )
 def fill_with_auto_config(n_clicks):
     if (n_clicks > 0):
-        return 30, 5, 1, 1, 'auto_config', 0, 'poisson', 1, 0, -1, -2.15, 1.27, 4, 0.1, 1, 0.03
+        return 30, 3, 1, 1, 'sotsuron', 0, 'poisson', 1, 1, -1, -2.15, 1.27, 4, 0.1, '', 0.03
     else:
         raise dash.exceptions.PreventUpdate
+
 
 @app.callback(
     Output('tmp', 'children'),
@@ -159,8 +161,9 @@ def excute_simulation(
             'SIGMA': float(sigma),
             'SIGNIFICANT_DIGIT': int(significant_digit),
             'W_T': float(wt),
-            'HUB_STATIONS': [int(hub_stations)],
-            'LAMBDA': float(lambda_value)
+            'HUB_STATIONS': [],
+            'LAMBDA': float(lambda_value),
+            'DEMAND_PATH': 'demands.csv'
         })
         sim1.get_all_datas()
         sim1.excute()
@@ -168,6 +171,7 @@ def excute_simulation(
         return json.dumps(df.to_json())
     else:
         raise dash.exceptions.PreventUpdate
+
 
 @app.callback(
     Output('main_graph', 'figure'),
@@ -178,7 +182,9 @@ def update_main_graph(json_df):
     fig = create_main_figure(df)
     return fig
 
+
 def create_main_figure(df):
+    print(df)
     df = df.sort_values('index')
     return px.scatter(
         df, x='x', y='y',

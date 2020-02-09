@@ -17,12 +17,14 @@ import plotly
 import plotly.express as px
 import pandas as pd
 
+
 def my_round(val, digit=0):
     p = 10 ** digit
     if (digit == 0):
         return int((val * p * 2 + 1) // 2 / p)
     else:
         return (val * p * 2 + 1) // 2 / p
+
 
 class Simulation():
 
@@ -43,7 +45,7 @@ class Simulation():
         'W_T': 0.1,
         'HUB_STATIONS': [],
         'LAMBDA': 0.05,
-        'DEMANDD_PATH': 'demands.csv'
+        'DEMAND_PATH': 'demands.csv'
     }):
         if (params['NUMBER_OF_STATIONS'] * params['SELECT_RATIO'] > 1000):
             print('number of stations must be less than 1000')
@@ -481,7 +483,7 @@ class Simulation():
                 if (i in self.HUB_STATIONS):
                     list_for_df2.append([index, 'stations' + str(i), *self.S_relational_coords[i], t, 10])
                 else:
-                    list_for_df2.append(['stations' + str(i), *self.S_relational_coords[i], t, 5])
+                    list_for_df2.append([index, 'stations' + str(i), *self.S_relational_coords[i], t, 5])
         columns = ['index', 'type', 'y', 'x', 't', 'size']
         list_for_df = list_for_df1 + list_for_df2
         df = pd.DataFrame(data=list_for_df, columns=columns)
