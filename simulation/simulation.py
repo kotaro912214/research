@@ -17,6 +17,8 @@ import plotly
 import plotly.express as px
 import pandas as pd
 
+import getData
+
 
 def my_round(val, digit=0):
     p = 10 ** digit
@@ -98,15 +100,9 @@ class Simulation():
         if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
-    def read_sid(self):
-        sid_path = self.base_path / 'sid.txt'
-        f = open(sid_path)
-        SID = f.read()
-        return SID
-
     def make_request(self, api, params):
         base_url = 'https://api-challenge.navitime.biz/v1s/'
-        request = base_url + self.read_sid() + api
+        request = base_url + getData.read_sid(self.base_path) + api
         url_params = urllib.parse.urlencode(params)
         request += url_params
         return request
@@ -233,8 +229,10 @@ class Simulation():
                 'goal': '',
                 'order': 'total_distance',
             }
-            S_distances = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
-            S_traveltimes = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
+            S_distances = np.zeros(
+                (self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
+            S_traveltimes = np.zeros(
+                (self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
             for i in range(self.NUMBER_OF_STATIONS - 1):
                 for j in tqdm(
                     range(i + 1, self.NUMBER_OF_STATIONS),
@@ -242,10 +240,13 @@ class Simulation():
                 ):
                     time.sleep(1)
                     if (self.S_coords[i] != self.S_coords[j]):
-                        params_route['start'] = str(self.S_coords[i][0]) + ',' + str(self.S_coords[i][1])
-                        params_route['goal'] = str(self.S_coords[j][0]) + ',' + str(self.S_coords[j][1])
+                        params_route['start'] = str(
+                            self.S_coords[i][0]) + ',' + str(self.S_coords[i][1])
+                        params_route['goal'] = str(
+                            self.S_coords[j][0]) + ',' + str(self.S_coords[j][1])
                         time.sleep(0.65)
-                        request = self.make_request(self.KIND_OF_AIP['route'], params_route)
+                        request = self.make_request(
+                            self.KIND_OF_AIP['route'], params_route)
                         response = self.get_response(request)
                         S_distances[i][j] = response['items'][0]['summary']['move']['distance']
                         S_distances[j][i] = response['items'][0]['summary']['move']['distance']
@@ -263,8 +264,10 @@ class Simulation():
                 self.distance_file_path
             )
         else:
-            S_distances = np.zeros((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
-            S_traveltimes = np.ones((self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
+            S_distances = np.zeros(
+                (self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
+            S_traveltimes = np.ones(
+                (self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
             self.write_matrix(
                 S_traveltimes,
                 self.travel_file_path
@@ -320,7 +323,8 @@ class Simulation():
 
         if (self.is_file_exist(self.travel_file_path) and self.is_file_exist(self.distance_file_path)):
             self.S_traveltimes = self.read_matrix(self.travel_file_path)
-            self.S_traveltimes = np.array(self.S_traveltimes, dtype=int).tolist()
+            self.S_traveltimes = np.array(
+                self.S_traveltimes, dtype=int).tolist()
             self.S_distances = self.read_matrix(self.distance_file_path)
             self.S_distances = np.array(self.S_distances, dtype=int).tolist()
             if ((self.CONTINUOUS_TIME and self.S_traveltimes[0][0] == 1) or (not self.CONTINUOUS_TIME and self.S_traveltimes[0][0] != 1)):
@@ -341,9 +345,11 @@ class Simulation():
 
     def make_random_demands(self, mode):
         if (mode == 'poisson'):
-            demands = np.random.poisson(lam=self.LAMBDA, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+            demands = np.random.poisson(lam=self.LAMBDA, size=(
+                self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
         else:
-            demands = np.random.normal(loc=self.MU, scale=self.SIGMA, size=(self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
+            demands = np.random.normal(loc=self.MU, scale=self.SIGMA, size=(
+                self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
             demands = np.round(demands).astype('int')
         for t in range(self.TIME + 1):
             for i in range(self.NUMBER_OF_STATIONS):
@@ -367,11 +373,13 @@ class Simulation():
                 new_demands.append(demands[i])
         threeD_demands = [None] * (self.TIME + 1)
         for t in range(self.TIME + 1):
-            threeD_demands[t] = new_demands[t * self.NUMBER_OF_STATIONS:(t + 1) * self.NUMBER_OF_STATIONS]
+            threeD_demands[t] = new_demands[t *
+                                            self.NUMBER_OF_STATIONS:(t + 1) * self.NUMBER_OF_STATIONS]
         return np.array(threeD_demands, dtype=int).tolist()
 
     def make_available_vhecles(self):
-        available_vhecles = np.zeros([self.NUMBER_OF_STATIONS, self.TIME + 1], dtype=int).tolist()
+        available_vhecles = np.zeros(
+            [self.NUMBER_OF_STATIONS, self.TIME + 1], dtype=int).tolist()
         for i in range(self.NUMBER_OF_STATIONS):
             for j in range(self.TIME + 1):
                 available_vhecles[i][j] = self.S_vhecles[i]
@@ -398,8 +406,10 @@ class Simulation():
         matplotlib.use('Agg')
         rse_list = self.read_matrix(self.sub_dir_path / 'rse.csv')
         rse_list = np.array(rse_list).astype('int')
-        plt.plot(np.linspace(0, self.TIME, self.TIME + 1), rse_list[0], color="red", label='non relocation')
-        plt.plot(np.linspace(0, self.TIME, self.TIME + 1), rse_list[1], color="blue", label='relocation')
+        plt.plot(np.linspace(0, self.TIME, self.TIME + 1),
+                 rse_list[0], color="red", label='non relocation')
+        plt.plot(np.linspace(0, self.TIME, self.TIME + 1),
+                 rse_list[1], color="blue", label='relocation')
         plt.legend()
         plt.grid()
         plt.title('only rse considered')
@@ -424,7 +434,8 @@ class Simulation():
         # params_route_shape['goal'] = '35.706822,139.815956'
         params_route_shape['start'] = start
         params_route_shape['goal'] = goal
-        request = self.make_request(self.KIND_OF_AIP['route_shape'], params_route_shape)
+        request = self.make_request(
+            self.KIND_OF_AIP['route_shape'], params_route_shape)
         response = self.get_response(request)
         route_coords = []
         for path in response['items'][0]['path']:
@@ -434,13 +445,17 @@ class Simulation():
     def make_vhecle_relational_coords(self):
         self.S_relational_coords = np.zeros((self.NUMBER_OF_STATIONS, 2))
         for i in range(self.NUMBER_OF_STATIONS):
-            self.S_relational_coords[i][0] = self.coordinate_transformation(self.S_coords[i][0])
-            self.S_relational_coords[i][1] = self.coordinate_transformation(self.S_coords[i][1])
+            self.S_relational_coords[i][0] = self.coordinate_transformation(
+                self.S_coords[i][0])
+            self.S_relational_coords[i][1] = self.coordinate_transformation(
+                self.S_coords[i][1])
         self.NUMBER_OF_VHECLES = sum(self.S_vhecles)
-        self.V_relational_coords = np.zeros((self.NUMBER_OF_VHECLES, self.TIME + 1, 2))
+        self.V_relational_coords = np.zeros(
+            (self.NUMBER_OF_VHECLES, self.TIME + 1, 2))
         i, j = 0, 0
         while (i < self.NUMBER_OF_VHECLES):
-            self.V_relational_coords[i] = [[*self.S_relational_coords[j]]] * (self.TIME + 1)
+            self.V_relational_coords[i] = [
+                [*self.S_relational_coords[j]]] * (self.TIME + 1)
             i += 1
             if (i >= sum(self.S_vhecles[:j + 1])):
                 j += 1
@@ -466,15 +481,21 @@ class Simulation():
         dt = t_goal - t_start
         if (dt <= 0):
             print('**error** t_start and t_goal are same value')
-        dx = my_round((self.S_relational_coords[j][1] - self.S_relational_coords[i][1]) / dt, self.SIGNIFICANT_DIGIT)
-        dy = my_round((self.S_relational_coords[j][0] - self.S_relational_coords[i][0]) / dt, self.SIGNIFICANT_DIGIT)
+        dx = my_round(
+            (self.S_relational_coords[j][1] - self.S_relational_coords[i][1]) / dt, self.SIGNIFICANT_DIGIT)
+        dy = my_round(
+            (self.S_relational_coords[j][0] - self.S_relational_coords[i][0]) / dt, self.SIGNIFICANT_DIGIT)
         for v in range(self.NUMBER_OF_VHECLES):
             if (all(self.S_relational_coords[i] == self.V_relational_coords[v][t_start])):
-                self.V_relational_coords[v][t_start][0] = my_round(self.V_relational_coords[v][t_start][0] + 0.0001, self.SIGNIFICANT_DIGIT)
+                self.V_relational_coords[v][t_start][0] = my_round(
+                    self.V_relational_coords[v][t_start][0] + 0.0001, self.SIGNIFICANT_DIGIT)
                 for t in range(t_start, t_goal - 1):
-                    self.V_relational_coords[v][t + 1][1] = my_round(self.V_relational_coords[v][t][1] + dx, self.SIGNIFICANT_DIGIT)
-                    self.V_relational_coords[v][t + 1][0] = my_round(self.V_relational_coords[v][t][0] + dy, self.SIGNIFICANT_DIGIT)
-                self.V_relational_coords[v][t_goal:] = [[*self.S_relational_coords[j]]] * len(self.V_relational_coords[v][t_goal:])
+                    self.V_relational_coords[v][t + 1][1] = my_round(
+                        self.V_relational_coords[v][t][1] + dx, self.SIGNIFICANT_DIGIT)
+                    self.V_relational_coords[v][t + 1][0] = my_round(
+                        self.V_relational_coords[v][t][0] + dy, self.SIGNIFICANT_DIGIT)
+                self.V_relational_coords[v][t_goal:] = [
+                    [*self.S_relational_coords[j]]] * len(self.V_relational_coords[v][t_goal:])
                 return 1
         else:
             print('there is no vhecle that can be release.', i, j, t_start, t_goal)
@@ -483,14 +504,17 @@ class Simulation():
         list_for_df1 = []
         for i in range(len(self.V_relational_coords)):
             for t in range(self.TIME + 1):
-                list_for_df1.append(['car' + str(i), *self.V_relational_coords[i][t], t, 1])
+                list_for_df1.append(
+                    ['car' + str(i), *self.V_relational_coords[i][t], t, 1])
         list_for_df2 = []
         for i in range(self.NUMBER_OF_STATIONS):
             for t in range(self.TIME + 1):
                 if (i in self.HUB_STATIONS):
-                    list_for_df2.append(['stations' + str(i), *self.S_relational_coords[i], t, 10])
+                    list_for_df2.append(
+                        ['stations' + str(i), *self.S_relational_coords[i], t, 10])
                 else:
-                    list_for_df2.append(['stations' + str(i), *self.S_relational_coords[i], t, 5])
+                    list_for_df2.append(
+                        ['stations' + str(i), *self.S_relational_coords[i], t, 5])
         columns = ['type', 'y', 'x', 't', 'size']
         list_for_df = list_for_df1 + list_for_df2
         df = pd.DataFrame(data=list_for_df, columns=columns)
@@ -521,19 +545,23 @@ class Simulation():
             # all vhecles are available in i
             is_all_available = []
             for t in range(t_goal, self.TIME + 1):
-                is_all_available.append(available_vhecles[j][t] + demand <= self.S_capacities[j])
+                is_all_available.append(
+                    available_vhecles[j][t] + demand <= self.S_capacities[j])
             if (all(is_all_available)):
                 # parking is available
                 can_contract = demand
             else:
                 # parking is not available
-                can_contract = self.S_capacities[j] - max(available_vhecles[j][t_goal:])
-                rsf += (max(available_vhecles[j][t_goal:]) + demand - self.S_capacities[j])
+                can_contract = self.S_capacities[j] - \
+                    max(available_vhecles[j][t_goal:])
+                rsf += (max(available_vhecles[j][t_goal:]
+                            ) + demand - self.S_capacities[j])
         else:
             # all vhecles are not available in i
             is_all_available = []
             for t in range(t_goal, self.TIME + 1):
-                is_all_available.append(available_vhecles[j][t] + demand <= self.S_capacities[j])
+                is_all_available.append(
+                    available_vhecles[j][t] + demand <= self.S_capacities[j])
             if (all(is_all_available)):
                 # parking is available
                 can_contract = available_vhecles[i][t_start]
@@ -544,7 +572,8 @@ class Simulation():
                     self.S_capacities[j] - max(available_vhecles[j][t_goal:]),
                     available_vhecles[i][t_start]
                 ])
-                rsf += (max(available_vhecles[j][t_goal:]) + demand - self.S_capacities[j])
+                rsf += (max(available_vhecles[j][t_goal:]
+                            ) + demand - self.S_capacities[j])
                 rse += (demand - available_vhecles[i][t_start])
         return [can_contract, rsf, rse]
 
@@ -564,8 +593,10 @@ class Simulation():
             self.travel_distances['user'] += self.S_distances[i][j]
         elif (mode != 'demand'):
             self.travel_distances['jockey'] += self.S_distances[i][j]
-        available_vhecles[i][t:] = list(map(lambda x: x - can_contract, available_vhecles[i][t:]))
-        available_vhecles[j][t_tmp:] = list(map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
+        available_vhecles[i][t:] = list(
+            map(lambda x: x - can_contract, available_vhecles[i][t:]))
+        available_vhecles[j][t_tmp:] = list(
+            map(lambda x: x + can_contract, available_vhecles[j][t_tmp:]))
         if (can_contract):
             self.moves.append([i, j, t, t_tmp, current, mode])
         # for _ in range(can_contract):
@@ -583,7 +614,8 @@ class Simulation():
                 ])):
                     # 上の条件式が真のとき下の条件式でエラーがでてしまうためこのコメントの上下のif文は一つにできない
                     if (available_vhecles[j][current + self.S_traveltimes[i][j]] == self.S_capacities[j]):
-                        soonest_rsfs.append([j, current + self.S_traveltimes[i][j]])
+                        soonest_rsfs.append(
+                            [j, current + self.S_traveltimes[i][j]])
         if (len(soonest_rsfs)):
             return soonest_rsfs
         else:
@@ -668,7 +700,8 @@ class Simulation():
                 t_g = min([t_g, t_start + 1])
         if (make_rse > 0):
             G += make_rse
-        make_rsf = 1 + available_vhecles[goal][t_goal] - self.S_capacities[goal]
+        make_rsf = 1 + \
+            available_vhecles[goal][t_goal] - self.S_capacities[goal]
         for i in range(self.NUMBER_OF_STATIONS):
             for t in range(t_start, t_goal - self.S_traveltimes[i][goal] + 1):
                 if (demands[t][i][goal]):
@@ -700,7 +733,8 @@ class Simulation():
                 t_g = min([t_g, t_start + 1])
         if (make_rse > 0):
             G += make_rse
-        make_rsf = 1 + available_vhecles[goal][t_goal] - self.S_capacities[goal]
+        make_rsf = 1 + \
+            available_vhecles[goal][t_goal] - self.S_capacities[goal]
         for i in range(self.NUMBER_OF_STATIONS):
             for t in range(t_start, t_goal - self.S_traveltimes[i][goal] + 1):
                 if (demands[t][i][goal]):
@@ -712,7 +746,8 @@ class Simulation():
         if (E - G + 1 <= 0):
             cost = 100
         else:
-            cost = 1 / (E - G + 1) + delta + self.W_T * self.S_traveltimes[start][goal]
+            cost = 1 / (E - G + 1) + delta + self.W_T * \
+                self.S_traveltimes[start][goal]
         return cost
 
     def return_hub_vhecles(self, available_vhecles, demands, t):
@@ -808,11 +843,13 @@ class Simulation():
             if (self.RELOCATE):
                 for e in range(self.NUMBER_OF_EMPLOYEES):
                     path_list = []
-                    soonest_rsfs = self.look_for_soonest_rsf(available_vhecles, t, demands)
+                    soonest_rsfs = self.look_for_soonest_rsf(
+                        available_vhecles, t, demands)
                     for soonest_rsfs_item in soonest_rsfs:
                         soonest_rsf, rsf_target_time = soonest_rsfs_item
                         if (soonest_rsf >= 0):
-                            soonest_rses = self.look_for_soonest_rse(available_vhecles, t, rsf_target_time, demands, soonest_rsf)
+                            soonest_rses = self.look_for_soonest_rse(
+                                available_vhecles, t, rsf_target_time, demands, soonest_rsf)
                             for soonest_rses_item in soonest_rses:
                                 soonest_rse, t_start = soonest_rses_item
                                 if (soonest_rse >= 0):
@@ -821,11 +858,13 @@ class Simulation():
                                         soonest_rsf,
                                         soonest_rse,
                                         t_start,
-                                        t_start + self.S_traveltimes[soonest_rsf][soonest_rse],
+                                        t_start +
+                                        self.S_traveltimes[soonest_rsf][soonest_rse],
                                         'rsf-rse'
                                     ])
                                 else:
-                                    avail_parks = self.look_for_available_park(available_vhecles, t, rsf_target_time, soonest_rsf)
+                                    avail_parks = self.look_for_available_park(
+                                        available_vhecles, t, rsf_target_time, soonest_rsf)
                                     for avail_parks_item in avail_parks:
                                         available_park, available_time = avail_parks_item
                                         if (available_park >= 0):
@@ -834,18 +873,21 @@ class Simulation():
                                                 soonest_rsf,
                                                 available_park,
                                                 available_time,
-                                                available_time + self.S_traveltimes[soonest_rsf][available_park],
+                                                available_time +
+                                                self.S_traveltimes[soonest_rsf][available_park],
                                                 'rsf-avail'
                                             ])
                                         else:
                                             # update time
                                             pass
                         else:
-                            soonest_rses = self.look_for_soonest_rse(available_vhecles, t, rsf_target_time, demands, soonest_rsf)
+                            soonest_rses = self.look_for_soonest_rse(
+                                available_vhecles, t, rsf_target_time, demands, soonest_rsf)
                             for soonest_rses_item in soonest_rses:
                                 soonest_rse, rse_target_time = soonest_rses_item
                                 if (soonest_rse >= 0):
-                                    release_parks = self.look_for_park_can_release(available_vhecles, t, rse_target_time, soonest_rse)
+                                    release_parks = self.look_for_park_can_release(
+                                        available_vhecles, t, rse_target_time, soonest_rse)
                                     for release_parks_item in release_parks:
                                         can_release, can_release_time = release_parks_item
                                         if (can_release >= 0):
@@ -854,7 +896,8 @@ class Simulation():
                                                 can_release,
                                                 soonest_rse,
                                                 can_release_time,
-                                                can_release_time + self.S_traveltimes[can_release][soonest_rse],
+                                                can_release_time +
+                                                self.S_traveltimes[can_release][soonest_rse],
                                                 'rse-release'
                                             ])
                                         else:
@@ -883,9 +926,11 @@ class Simulation():
                                 )
                         path_list = sorted(path_list, key=lambda x: x[5])
                         if (self.USER_RELOCATE and self.can_user_relocation(path_list[0][0])):
-                            available_vhecles = self.move_cars(available_vhecles, *path_list[0][:4], 1, t, 'user')
+                            available_vhecles = self.move_cars(
+                                available_vhecles, *path_list[0][:4], 1, t, 'user')
                         elif (self.EMPLOYEE_RELOCATE):
-                            available_vhecles = self.move_cars(available_vhecles, *path_list[0][:4], 1, t, path_list[0][4])
+                            available_vhecles = self.move_cars(
+                                available_vhecles, *path_list[0][:4], 1, t, path_list[0][4])
 
             if (len(self.HUB_STATIONS)):
                 available_vhecles = self.return_hub_vhecles(
@@ -912,12 +957,14 @@ class Simulation():
                         )
                         rsf += rsf_tmp
                         rse += rse_tmp
-                        available_vhecles = self.move_cars(available_vhecles, i, j, t, t_tmp, can_contract, t)
+                        available_vhecles = self.move_cars(
+                            available_vhecles, i, j, t, t_tmp, can_contract, t)
                         success += can_contract
 
             if (t == self.TIME):
                 self.write_matrix(
-                    [self.LAMBDA, np.array(demands).sum(), rsf, rse, success, time_over, relocation_rsf_rse, relocation_rsf_avail, relocation_rse_release],
+                    [self.LAMBDA, np.array(demands).sum(), rsf, rse, success, time_over,
+                     relocation_rsf_rse, relocation_rsf_avail, relocation_rse_release],
                     result_file_path,
                     mode='a'
                 )
@@ -926,7 +973,8 @@ class Simulation():
             success_list.append(success)
         if (self.is_file_exist(self.sub_dir_path / ('available_vhecles.csv'))):
             Path(self.sub_dir_path / ('available_vhecles.csv')).unlink()
-        available_vhecles_for_show = np.insert(available_vhecles_for_show, 0, np.arange(self.TIME + 1), axis=0)
+        available_vhecles_for_show = np.insert(
+            available_vhecles_for_show, 0, np.arange(self.TIME + 1), axis=0)
         # self.write_matrix(
         #     available_vhecles_for_show,
         #     self.sub_dir_path / 'available_vhecles.csv'
@@ -979,7 +1027,8 @@ class Users():
     def __init__(self, population, number_of_stations):
         self.POPULATION = population
         self.NUMBER_OF_STATIONS = number_of_stations
-        self.user_locations = np.random.randint(self.NUMBER_OF_STATIONS, size=self.POPULATION)
+        self.user_locations = np.random.randint(
+            self.NUMBER_OF_STATIONS, size=self.POPULATION)
         self.user_transitionfunc = np.random.rand(self.POPULATION)
         self.user_transitionfunc_estimated = np.zeros((self.POPULATION))
 
