@@ -100,13 +100,6 @@ class Simulation():
         if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
-    def make_request(self, api, params):
-        base_url = 'https://api-challenge.navitime.biz/v1s/'
-        request = base_url + getData.read_sid(self.base_path) + api
-        url_params = urllib.parse.urlencode(params)
-        request += url_params
-        return request
-
     def get_response(self, request):
         try:
             response = json.loads(urllib.request.urlopen(request).read())
@@ -171,7 +164,8 @@ class Simulation():
         params_spot['limit'] = str(self.NUMBER_OF_STATIONS * self.SELECT_RATIO)
         params_spot['datum'] = 'tokyo'
         # get the data of the station list
-        request = self.make_request(
+        request = getData.make_request(
+            self.base_path,
             self.KIND_OF_AIP['spot_list'],
             params_spot
         )
@@ -245,8 +239,11 @@ class Simulation():
                         params_route['goal'] = str(
                             self.S_coords[j][0]) + ',' + str(self.S_coords[j][1])
                         time.sleep(0.65)
-                        request = self.make_request(
-                            self.KIND_OF_AIP['route'], params_route)
+                        request = getData.make_request(
+                            self.base_path,
+                            self.KIND_OF_AIP['route'],
+                            params_route
+                        )
                         response = self.get_response(request)
                         S_distances[i][j] = response['items'][0]['summary']['move']['distance']
                         S_distances[j][i] = response['items'][0]['summary']['move']['distance']
@@ -434,8 +431,11 @@ class Simulation():
         # params_route_shape['goal'] = '35.706822,139.815956'
         params_route_shape['start'] = start
         params_route_shape['goal'] = goal
-        request = self.make_request(
-            self.KIND_OF_AIP['route_shape'], params_route_shape)
+        request = getData.make_request(
+            self.base_path,
+            self.KIND_OF_AIP['route_shape'],
+            params_route_shape
+        )
         response = self.get_response(request)
         route_coords = []
         for path in response['items'][0]['path']:

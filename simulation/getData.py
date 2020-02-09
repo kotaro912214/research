@@ -23,3 +23,11 @@ def read_sid(base_path):
     f = open(sid_path)
     SID = f.read()
     return SID
+
+
+def make_request(base_path, api, params):
+    base_url = 'https://api-challenge.navitime.biz/v1s/'
+    request = base_url + read_sid(base_path) + api
+    url_params = urllib.parse.urlencode(params)
+    request += url_params
+    return request
