@@ -59,6 +59,27 @@ def read_sid(base_path):
 
 
 def make_request(base_path, api, params):
+    """APIへのリクエストを作成するメソッド
+
+    Args:
+        base_path: str. シミュレーションを実行するベースディレクトリのパスを示す．
+        aip: str. 利用するapiの種類を識別する文字列．
+            example
+            '/spot/list?'
+        params: dict. URLで利用するパラメータとその値を格納した辞書．
+            example 
+            {
+                'category': '0817001002',
+                'coord': '35.689296,139.702089',
+                'radius': '100',
+                'limit': '10',
+                'datum': 'tokyo'
+            }
+    Returns:
+        str. 作成したAPIリクエストを実行するためのURLを返す．
+        example
+        'https://api-challenge.navitime.biz/v1s/sid/spot/list?category=0817001002&coord={35.689296,139.702089}&radius=100&limit=10&datum=tokyo'
+    """
     base_url = 'https://api-challenge.navitime.biz/v1s/'
     request = base_url + read_sid(base_path) + api
     url_params = urllib.parse.urlencode(params)
