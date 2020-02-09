@@ -275,9 +275,6 @@ class Simulation():
             self.vhecle_file_path
         )
 
-    def is_file_exist(self, file_path):
-        return Path(file_path).exists()
-
     def get_all_datas(self):
         self.code_file_path = self.sub_dir_path / ('station_codes.csv')
         self.coord_file_path = self.sub_dir_path / ('station_coords.csv')
@@ -287,27 +284,27 @@ class Simulation():
         self.distance_file_path = self.sub_dir_path / ('station_distances.csv')
         self.vhecle_file_path = self.sub_dir_path / ('station_vhecles.csv')
 
-        if (self.is_file_exist(self.code_file_path) and self.is_file_exist(self.coord_file_path)):
+        if (getData.is_exist(self.code_file_path) and getData.is_exist(self.coord_file_path)):
             self.S_codes = getData.read_matrix(self.code_file_path)
             self.S_coords = getData.read_matrix(self.coord_file_path)
         else:
             self.get_station_codes_and_coords()
             self.get_all_datas()
 
-        if (self.is_file_exist(self.url_file_path)):
+        if (getData.is_exist(self.url_file_path)):
             self.S_urls = getData.read_matrix(self.url_file_path)
         else:
             self.get_station_urls()
             self.get_all_datas()
 
-        if (self.is_file_exist(self.capa_file_path)):
+        if (getData.is_exist(self.capa_file_path)):
             self.S_capacities = getData.read_matrix(self.capa_file_path)
             self.S_capacities = list(map(int, self.S_capacities))
         else:
             self.get_station_capacities()
             self.get_all_datas()
 
-        if (self.is_file_exist(self.travel_file_path) and self.is_file_exist(self.distance_file_path)):
+        if (getData.is_exist(self.travel_file_path) and getData.is_exist(self.distance_file_path)):
             self.S_traveltimes = getData.read_matrix(self.travel_file_path)
             self.S_traveltimes = np.array(
                 self.S_traveltimes, dtype=int).tolist()
@@ -322,7 +319,7 @@ class Simulation():
             self.get_station_traveltimes_and_distances()
             self.get_all_datas()
 
-        if (self.is_file_exist(self.vhecle_file_path)):
+        if (getData.is_exist(self.vhecle_file_path)):
             self.S_vhecles = getData.read_matrix(self.vhecle_file_path)
             self.S_vhecles = list(map(int, self.S_vhecles))
         else:
@@ -791,7 +788,7 @@ class Simulation():
         available_vhecles_for_show = self.make_available_vhecles()
         if (self.MAKE_RANDOM_DEMANDS):
             demands = self.make_random_demands(mode=self.RANDOM_MODE)
-        elif (self.is_file_exist(self.base_path / self.DEMAND_PATH)):
+        elif (getData.is_exist(self.base_path / self.DEMAND_PATH)):
             demands = self.read_demands()
         else:
             demands = self.make_random_demands(mode=self.RANDOM_MODE)
@@ -960,7 +957,7 @@ class Simulation():
             rsf_list.append(rsf)
             rse_list.append(rse)
             success_list.append(success)
-        if (self.is_file_exist(self.sub_dir_path / ('available_vhecles.csv'))):
+        if (getData.is_exist(self.sub_dir_path / ('available_vhecles.csv'))):
             Path(self.sub_dir_path / ('available_vhecles.csv')).unlink()
         available_vhecles_for_show = np.insert(
             available_vhecles_for_show, 0, np.arange(self.TIME + 1), axis=0)

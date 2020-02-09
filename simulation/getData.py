@@ -43,3 +43,7 @@ def read_matrix(path):
             return matrix[0]
         else:
             return matrix
+
+
+def is_exist(file_path):
+    return Path(file_path).exists()
