@@ -18,6 +18,14 @@ import plotly.express as px
 import pandas as pd
 
 
+def my_round(val, digit=0):
+    p = 10 ** digit
+    if (digit == 0):
+        return int((val * p * 2 + 1) // 2 / p)
+    else:
+        return (val * p * 2 + 1) // 2 / p
+
+
 def read_sid(base_path):
     sid_path = base_path / 'sid.txt'
     f = open(sid_path)

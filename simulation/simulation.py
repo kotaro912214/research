@@ -20,14 +20,6 @@ import pandas as pd
 import getData
 
 
-def my_round(val, digit=0):
-    p = 10 ** digit
-    if (digit == 0):
-        return int((val * p * 2 + 1) // 2 / p)
-    else:
-        return (val * p * 2 + 1) // 2 / p
-
-
 class Simulation():
 
     def __init__(self, params={
@@ -459,26 +451,26 @@ class Simulation():
             self.x_lim = [x_lim[0] - 0.01, x_lim[1] + 0.01]
             self.y_lim = [y_lim[0] - 0.01, y_lim[1] + 0.01]
         if (coord > 100.0):
-            return my_round(100 * (coord - self.x_lim[0]) / (self.x_lim[1] - self.x_lim[0]), self.SIGNIFICANT_DIGIT)
+            return getData.my_round(100 * (coord - self.x_lim[0]) / (self.x_lim[1] - self.x_lim[0]), self.SIGNIFICANT_DIGIT)
         else:
-            return my_round(100 * (coord - self.y_lim[0]) / (self.y_lim[1] - self.y_lim[0]), self.SIGNIFICANT_DIGIT)
+            return getData.my_round(100 * (coord - self.y_lim[0]) / (self.y_lim[1] - self.y_lim[0]), self.SIGNIFICANT_DIGIT)
 
     def update_vhecle_relational_coords(self, i, j, t_start, t_goal):
         dt = t_goal - t_start
         if (dt <= 0):
             print('**error** t_start and t_goal are same value')
-        dx = my_round(
+        dx = getData.my_round(
             (self.S_relational_coords[j][1] - self.S_relational_coords[i][1]) / dt, self.SIGNIFICANT_DIGIT)
-        dy = my_round(
+        dy = getData.my_round(
             (self.S_relational_coords[j][0] - self.S_relational_coords[i][0]) / dt, self.SIGNIFICANT_DIGIT)
         for v in range(self.NUMBER_OF_VHECLES):
             if (all(self.S_relational_coords[i] == self.V_relational_coords[v][t_start])):
-                self.V_relational_coords[v][t_start][0] = my_round(
+                self.V_relational_coords[v][t_start][0] = getData.my_round(
                     self.V_relational_coords[v][t_start][0] + 0.0001, self.SIGNIFICANT_DIGIT)
                 for t in range(t_start, t_goal - 1):
-                    self.V_relational_coords[v][t + 1][1] = my_round(
+                    self.V_relational_coords[v][t + 1][1] = getData.my_round(
                         self.V_relational_coords[v][t][1] + dx, self.SIGNIFICANT_DIGIT)
-                    self.V_relational_coords[v][t + 1][0] = my_round(
+                    self.V_relational_coords[v][t + 1][0] = getData.my_round(
                         self.V_relational_coords[v][t][0] + dy, self.SIGNIFICANT_DIGIT)
                 self.V_relational_coords[v][t_goal:] = [
                     [*self.S_relational_coords[j]]] * len(self.V_relational_coords[v][t_goal:])
