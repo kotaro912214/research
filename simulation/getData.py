@@ -19,6 +19,19 @@ import pandas as pd
 
 
 def my_round(val, digit=0):
+    """値を四捨五入するメソッド
+
+    組み込み関数のroundメソッドだと誤差が生じる．
+    任意の有効桁数で四捨五入するメソッドを定義．
+
+    Args:
+        val: float. 四捨五入する値
+        digit: int. 有効桁数，デフォルトでは0．
+
+    Returns:
+        四捨五入した値を返す．
+        digitが0の場合int，0でない場合はfloatを返す．
+    """
     p = 10 ** digit
     if (digit == 0):
         return int((val * p * 2 + 1) // 2 / p)
