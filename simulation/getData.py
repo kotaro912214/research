@@ -31,3 +31,15 @@ def make_request(base_path, api, params):
     url_params = urllib.parse.urlencode(params)
     request += url_params
     return request
+
+
+def read_matrix(path):
+    matrix = []
+    with open(path, 'r') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            matrix.append(row)
+        if (len(matrix) == 1):
+            return matrix[0]
+        else:
+            return matrix

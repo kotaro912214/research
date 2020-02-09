@@ -124,17 +124,6 @@ class Simulation():
             writer.writerow(tqdm(matrix, desc=desc))
         file.close()
 
-    def read_matrix(self, path):
-        matrix = []
-        with open(path, 'r') as f:
-            reader = csv.reader(f)
-            for row in reader:
-                matrix.append(row)
-            if (len(matrix) == 1):
-                return matrix[0]
-            else:
-                return matrix
-
     def write_consts(self):
         const_file_path = self.sub_dir_path / ('const.csv')
         self.CONSTS = [
@@ -299,30 +288,30 @@ class Simulation():
         self.vhecle_file_path = self.sub_dir_path / ('station_vhecles.csv')
 
         if (self.is_file_exist(self.code_file_path) and self.is_file_exist(self.coord_file_path)):
-            self.S_codes = self.read_matrix(self.code_file_path)
-            self.S_coords = self.read_matrix(self.coord_file_path)
+            self.S_codes = getData.read_matrix(self.code_file_path)
+            self.S_coords = getData.read_matrix(self.coord_file_path)
         else:
             self.get_station_codes_and_coords()
             self.get_all_datas()
 
         if (self.is_file_exist(self.url_file_path)):
-            self.S_urls = self.read_matrix(self.url_file_path)
+            self.S_urls = getData.read_matrix(self.url_file_path)
         else:
             self.get_station_urls()
             self.get_all_datas()
 
         if (self.is_file_exist(self.capa_file_path)):
-            self.S_capacities = self.read_matrix(self.capa_file_path)
+            self.S_capacities = getData.read_matrix(self.capa_file_path)
             self.S_capacities = list(map(int, self.S_capacities))
         else:
             self.get_station_capacities()
             self.get_all_datas()
 
         if (self.is_file_exist(self.travel_file_path) and self.is_file_exist(self.distance_file_path)):
-            self.S_traveltimes = self.read_matrix(self.travel_file_path)
+            self.S_traveltimes = getData.read_matrix(self.travel_file_path)
             self.S_traveltimes = np.array(
                 self.S_traveltimes, dtype=int).tolist()
-            self.S_distances = self.read_matrix(self.distance_file_path)
+            self.S_distances = getData.read_matrix(self.distance_file_path)
             self.S_distances = np.array(self.S_distances, dtype=int).tolist()
             if ((self.CONTINUOUS_TIME and self.S_traveltimes[0][0] == 1) or (not self.CONTINUOUS_TIME and self.S_traveltimes[0][0] != 1)):
                 Path(self.travel_file_path).unlink()
@@ -334,7 +323,7 @@ class Simulation():
             self.get_all_datas()
 
         if (self.is_file_exist(self.vhecle_file_path)):
-            self.S_vhecles = self.read_matrix(self.vhecle_file_path)
+            self.S_vhecles = getData.read_matrix(self.vhecle_file_path)
             self.S_vhecles = list(map(int, self.S_vhecles))
         else:
             self.get_station_vhecles()
@@ -363,7 +352,7 @@ class Simulation():
 
     def read_demands(self):
         demads_file_path = self.base_path / self.DEMAND_PATH
-        demands = self.read_matrix(demads_file_path)
+        demands = getData.read_matrix(demads_file_path)
         new_demands = []
         for i in range((self.TIME + 1) * (self.NUMBER_OF_STATIONS + 1)):
             if ('-' not in demands[i][0]):
@@ -384,7 +373,7 @@ class Simulation():
 
     def draw_rsf_graph(self):
         matplotlib.use('Agg')
-        rsf_list = self.read_matrix(self.sub_dir_path / 'rsf.csv')
+        rsf_list = getData.read_matrix(self.sub_dir_path / 'rsf.csv')
         rsf_list = np.array(rsf_list).astype('int')
         t = np.linspace(0, self.TIME, self.TIME + 1)
         plt.plot(t, rsf_list[0], color="red", label='non relocation')
@@ -401,7 +390,7 @@ class Simulation():
 
     def draw_rse_graph(self):
         matplotlib.use('Agg')
-        rse_list = self.read_matrix(self.sub_dir_path / 'rse.csv')
+        rse_list = getData.read_matrix(self.sub_dir_path / 'rse.csv')
         rse_list = np.array(rse_list).astype('int')
         plt.plot(np.linspace(0, self.TIME, self.TIME + 1),
                  rse_list[0], color="red", label='non relocation')
