@@ -92,18 +92,6 @@ class Simulation():
         if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
-    def get_station_vhecles(self):
-        self.S_vhecles = []
-        for capa in self.S_capacities:
-            if (self.ELASTIC_VHECLES >= 0):
-                self.S_vhecles.append(self.ELASTIC_VHECLES)
-            else:
-                self.S_vhecles.append(int(capa) - 1)
-        getData.write_matrix(
-            self.S_vhecles,
-            self.vhecle_file_path
-        )
-
     def get_all_datas(self):
         self.code_file_path = self.sub_dir_path / ('station_codes.csv')
         self.coord_file_path = self.sub_dir_path / ('station_coords.csv')
@@ -139,7 +127,7 @@ class Simulation():
             self.S_capacities = getData.read_matrix(self.capa_file_path)
             self.S_capacities = list(map(int, self.S_capacities))
         else:
-            self.get_station_capacities(
+            getData.get_station_capacities(
                 self.NUMBER_OF_STATIONS,
                 self.S_urls,
                 self.sub_dir_path
@@ -155,7 +143,7 @@ class Simulation():
             if ((self.CONTINUOUS_TIME and self.S_traveltimes[0][0] == 1) or (not self.CONTINUOUS_TIME and self.S_traveltimes[0][0] != 1)):
                 Path(self.travel_file_path).unlink()
                 Path(self.distance_file_path).unlink()
-                self.get_station_traveltimes_and_distances(
+                getData.get_station_traveltimes_and_distances(
                     self.CONTINUOUS_TIME,
                     self.NUMBER_OF_STATIONS,
                     self.S_coords,
@@ -164,7 +152,7 @@ class Simulation():
                 )
                 self.get_all_datas()
         else:
-            self.get_station_traveltimes_and_distances(
+            getData.get_station_traveltimes_and_distances(
                 self.CONTINUOUS_TIME,
                 self.NUMBER_OF_STATIONS,
                 self.S_coords,
@@ -177,7 +165,7 @@ class Simulation():
             self.S_vhecles = getData.read_matrix(self.vhecle_file_path)
             self.S_vhecles = list(map(int, self.S_vhecles))
         else:
-            self.get_station_vhecles()
+            getData.get_station_vhecles(self.S_capacities, self.sub_dir_path)
             self.get_all_datas()
 
     def make_random_demands(self, mode):

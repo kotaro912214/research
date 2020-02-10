@@ -341,5 +341,15 @@ def get_station_capacities(N, S_urls, sub_dir_path):
     )
 
 
+def get_station_vhecles(S_capacities, sub_dir_path):
+    S_vhecles = []
+    for capa in S_capacities:
+        S_vhecles.append(int(capa) - 1)
+    write_matrix(
+        S_vhecles,
+        sub_dir_path / 'station_vhecles.csv'
+    )
+
+
 if (__name__ == "__main__"):
     print('use this file as a module')
