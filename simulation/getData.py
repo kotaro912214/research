@@ -218,6 +218,16 @@ def get_station_codes_and_coords(N, SELECT_RATIO, sub_dir_path, KIND_OF_API):
 
 
 def get_station_urls(N, S_codes, sub_dir_path):
+    """ステーション情報の取得に必要なステーションごとの詳細サイトURLを取得するメソッド
+
+    Args:
+        N: int, 読み込むステーション数を示す整数
+        S_codes: list, ステーションを識別するコードが格納されている配列
+        sub_dir_path: PureWindowsPath, str, 取得したURLをCSV形式で出力するファイルの相対パス．
+
+    Returns:
+        None
+    """
     S_urls = []
     base_url = "https://navitime.co.jp/poi?spt="
     for i in tqdm(range(N), desc='making urls...'):
