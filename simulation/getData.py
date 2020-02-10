@@ -143,6 +143,18 @@ def read_matrix(path):
 
 
 def write_matrix(matrix, path, mode='x'):
+    """任意の行列を任意のファイルに書き込むメソッド
+
+    単なる組み込み関数の処理のみでも実装可能だが，一次元と二次元の配列を処理する必要があるためそれを判断してファイル書き込みを行う．
+
+    Args:
+        matrix: list, np.ndarray, 任意の配列．Python組み込みのlsit型とnumpyの多次元配列どちらにも対応している．
+        path: str, pathlib.PureWindowsPath, 書き込むファイルのパス．文字列の相対パス，PureWindowsPathのどちらにも対応している．
+        mode: str, ファイルの書き込みモードを文字列で指定．'a', 'x'のどちらか．
+
+    Returns:
+        None
+    """
     file = open(path, mode, encoding='utf-8')
     writer = csv.writer(file, lineterminator='\n')
     desc = 'making ' + path.name
