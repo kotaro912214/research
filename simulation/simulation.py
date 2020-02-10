@@ -60,7 +60,7 @@ class Simulation():
         self.ELASTIC_VHECLES = params['ELASTIC_VHECLES']
         self.MU = params['MU']
         self.SIGMA = params['SIGMA']
-        self.KIND_OF_AIP = {
+        self.KIND_OF_API = {
             'spot_list': '/spot/list?',
             'category_list': '/category/list?',
             'route': '/route?',
@@ -91,47 +91,6 @@ class Simulation():
             pass
         if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
-
-    def get_station_codes_and_coords(self):
-        # set the params for spot list request
-        params_spot = {
-            'category': '',
-            'coord': '',
-            'radius': '',
-            'limit': '',
-            'datum': ''
-        }
-        # category code of careco carsharing
-        params_spot['category'] = '0817001002'
-        # a coord of shinjuku station
-        params_spot['coord'] = '35.689296,139.702089'
-        params_spot['radius'] = '100000'
-        params_spot['limit'] = str(self.NUMBER_OF_STATIONS * self.SELECT_RATIO)
-        params_spot['datum'] = 'tokyo'
-        # get the data of the station list
-        request = getData.make_request(
-            self.base_path,
-            self.KIND_OF_AIP['spot_list'],
-            params_spot
-        )
-        response = getData.get_response(request)
-        spots = response['items']
-        S_coords = []
-        S_codes = []
-        i = 1
-        for spot in spots:
-            if (i % self.SELECT_RATIO == 0):
-                S_coords.append([spot['coord']['lat'], spot['coord']['lon']])
-                S_codes.append(spot['code'].replace('-', '.'))
-            i += 1
-        getData.write_matrix(
-            S_coords,
-            self.coord_file_path
-        )
-        getData.write_matrix(
-            S_codes,
-            self.code_file_path
-        )
 
     def get_station_urls(self):
         S_urls = []
@@ -184,7 +143,7 @@ class Simulation():
                         time.sleep(0.65)
                         request = getData.make_request(
                             self.base_path,
-                            self.KIND_OF_AIP['route'],
+                            self.KIND_OF_API['route'],
                             params_route
                         )
                         response = getData.get_response(request)
@@ -242,7 +201,12 @@ class Simulation():
             self.S_codes = getData.read_matrix(self.code_file_path)
             self.S_coords = getData.read_matrix(self.coord_file_path)
         else:
-            self.get_station_codes_and_coords()
+            getData.get_station_codes_and_coords(
+                self.NUMBER_OF_STATIONS,
+                self.SELECT_RATIO,
+                self.sub_dir_path,
+                self.KIND_OF_API
+            )
             self.get_all_datas()
 
         if (getData.is_exist(self.url_file_path)):
@@ -373,7 +337,7 @@ class Simulation():
         params_route_shape['goal'] = goal
         request = getData.make_request(
             self.base_path,
-            self.KIND_OF_AIP['route_shape'],
+            self.KIND_OF_API['route_shape'],
             params_route_shape
         )
         response = getData.get_response(request)

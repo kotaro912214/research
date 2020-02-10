@@ -39,7 +39,7 @@ def my_round(val, digit=0):
         return (val * p * 2 + 1) // 2 / p
 
 
-def read_sid(base_path):
+def read_sid():
     """SIDを読み込むためのメソッド．
 
     当たり前のことだが，コードはGitHub上で管理することになる．
@@ -47,23 +47,22 @@ def read_sid(base_path):
     したがってGitHub上では管理しないSID.txtというファイルにSIDを記述し，コードを実行する度にこれを動的に読み込む．
 
     Args:
-        base_path: pathlib.PureWindowsPath, シミュレーションを実行するベースディレクトリのパスを示す．base_pathディレクトリ配下のSID.txtを参照する．
+        None
 
     Returns:
         str, 読み取ったSIDを返す．
     """
-    sid_path = base_path / 'sid.txt'
+    sid_path = PureWindowsPath(Path.cwd()) / 'sid.txt'
     f = open(sid_path)
     SID = f.read()
     return SID
 
 
-def make_request(base_path, api, params):
+def make_request(api, params):
     """APIへのリクエストを作成するメソッド
 
     Args:
-        base_path: pathlib.PureWindowsPath, シミュレーションを実行するベースディレクトリのパスを示す．
-        aip: str, 利用するapiの種類を識別する文字列．
+        api: str, 利用するapiの種類を識別する文字列．
             example:
 
             '/spot/list?'
@@ -87,7 +86,7 @@ def make_request(base_path, api, params):
 
     """
     base_url = 'https://api-challenge.navitime.biz/v1s/'
-    request = base_url + read_sid(base_path) + api
+    request = base_url + read_sid() + api
     url_params = urllib.parse.urlencode(params)
     request += url_params
     return request
@@ -175,6 +174,47 @@ def is_exist(file_path):
         bool, 存在する場合はTrue, しない場合はFalseを返す．
     """
     return Path(file_path).exists()
+
+
+def get_station_codes_and_coords(N, SELECT_RATIO, sub_dir_path, KIND_OF_API):
+    # set the params for spot list request
+    params_spot = {
+        'category': '',
+        'coord': '',
+        'radius': '',
+        'limit': '',
+        'datum': ''
+    }
+    # category code of careco carsharing
+    params_spot['category'] = '0817001002'
+    # a coord of shinjuku station
+    params_spot['coord'] = '35.689296,139.702089'
+    params_spot['radius'] = '100000'
+    params_spot['limit'] = str(N * SELECT_RATIO)
+    params_spot['datum'] = 'tokyo'
+    # get the data of the station list
+    request = make_request(
+        KIND_OF_API['spot_list'],
+        params_spot
+    )
+    response = get_response(request)
+    spots = response['items']
+    S_coords = []
+    S_codes = []
+    i = 1
+    for spot in spots:
+        if (i % SELECT_RATIO == 0):
+            S_coords.append([spot['coord']['lat'], spot['coord']['lon']])
+            S_codes.append(spot['code'].replace('-', '.'))
+        i += 1
+    write_matrix(
+        S_coords,
+        sub_dir_path / 'station_coords.csv'
+    )
+    write_matrix(
+        S_codes,
+        sub_dir_path / 'station_codes.csv'
+    )
 
 
 if (__name__ == "__main__"):
