@@ -106,65 +106,6 @@ class Simulation():
             self.capa_file_path
         )
 
-    def get_station_traveltimes_and_distances(self):
-        if (self.CONTINUOUS_TIME):
-            params_route = {
-                'car': 'only',
-                'start': '',
-                'goal': '',
-                'order': 'total_distance',
-            }
-            S_distances = np.zeros(
-                (self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
-            S_traveltimes = np.zeros(
-                (self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
-            for i in range(self.NUMBER_OF_STATIONS - 1):
-                for j in tqdm(
-                    range(i + 1, self.NUMBER_OF_STATIONS),
-                    desc='searching route of ' + str(i) + '...'
-                ):
-                    time.sleep(1)
-                    if (self.S_coords[i] != self.S_coords[j]):
-                        params_route['start'] = str(
-                            self.S_coords[i][0]) + ',' + str(self.S_coords[i][1])
-                        params_route['goal'] = str(
-                            self.S_coords[j][0]) + ',' + str(self.S_coords[j][1])
-                        time.sleep(0.65)
-                        request = getData.make_request(
-                            self.base_path,
-                            self.KIND_OF_API['route'],
-                            params_route
-                        )
-                        response = getData.get_response(request)
-                        S_distances[i][j] = response['items'][0]['summary']['move']['distance']
-                        S_distances[j][i] = response['items'][0]['summary']['move']['distance']
-                        S_traveltimes[i][j] = response['items'][0]['summary']['move']['time']
-                        S_traveltimes[j][i] = response['items'][0]['summary']['move']['time']
-                    else:
-                        S_distances[i][j] = 0
-                        S_traveltimes[i][j] = 0
-            getData.write_matrix(
-                S_traveltimes,
-                self.travel_file_path
-            )
-            getData.write_matrix(
-                S_distances,
-                self.distance_file_path
-            )
-        else:
-            S_distances = np.zeros(
-                (self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
-            S_traveltimes = np.ones(
-                (self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
-            getData.write_matrix(
-                S_traveltimes,
-                self.travel_file_path
-            )
-            getData.write_matrix(
-                S_distances,
-                self.distance_file_path
-            )
-
     def get_station_vhecles(self):
         self.S_vhecles = []
         for capa in self.S_capacities:
@@ -224,10 +165,22 @@ class Simulation():
             if ((self.CONTINUOUS_TIME and self.S_traveltimes[0][0] == 1) or (not self.CONTINUOUS_TIME and self.S_traveltimes[0][0] != 1)):
                 Path(self.travel_file_path).unlink()
                 Path(self.distance_file_path).unlink()
-                self.get_station_traveltimes_and_distances()
+                self.get_station_traveltimes_and_distances(
+                    self.CONTINUOUS_TIME,
+                    self.NUMBER_OF_STATIONS,
+                    self.S_coords,
+                    self.KIND_OF_API,
+                    self.sub_dir_path
+                )
                 self.get_all_datas()
         else:
-            self.get_station_traveltimes_and_distances()
+            self.get_station_traveltimes_and_distances(
+                self.CONTINUOUS_TIME,
+                self.NUMBER_OF_STATIONS,
+                self.S_coords,
+                self.KIND_OF_API,
+                self.sub_dir_path
+            )
             self.get_all_datas()
 
         if (getData.is_exist(self.vhecle_file_path)):

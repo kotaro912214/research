@@ -227,6 +227,65 @@ def get_station_codes_and_coords(N, SELECT_RATIO, sub_dir_path, KIND_OF_API):
     )
 
 
+def get_station_traveltimes_and_distances(CONSIDER_TRAVEL_TIME, N, S_coords, KIND_OF_API, sub_dir_path):
+    if (CONSIDER_TRAVEL_TIME):
+        params_route = {
+            'car': 'only',
+            'start': '',
+            'goal': '',
+            'order': 'total_distance',
+        }
+        S_distances = np.zeros(
+            (N, N), dtype=int).tolist()
+        S_traveltimes = np.zeros(
+            (N, N), dtype=int).tolist()
+        for i in range(N - 1):
+            for j in tqdm(
+                range(i + 1, N),
+                desc='searching route of ' + str(i) + '...'
+            ):
+                time.sleep(1)
+                if (S_coords[i] != S_coords[j]):
+                    params_route['start'] = str(
+                        S_coords[i][0]) + ',' + str(S_coords[i][1])
+                    params_route['goal'] = str(
+                        S_coords[j][0]) + ',' + str(S_coords[j][1])
+                    time.sleep(0.65)
+                    request = make_request(
+                        KIND_OF_API['route'],
+                        params_route
+                    )
+                    response = get_response(request)
+                    S_distances[i][j] = response['items'][0]['summary']['move']['distance']
+                    S_distances[j][i] = response['items'][0]['summary']['move']['distance']
+                    S_traveltimes[i][j] = response['items'][0]['summary']['move']['time']
+                    S_traveltimes[j][i] = response['items'][0]['summary']['move']['time']
+                else:
+                    S_distances[i][j] = 0
+                    S_traveltimes[i][j] = 0
+        write_matrix(
+            S_traveltimes,
+            sub_dir_path / 'station_traveltimes.csv'
+        )
+        write_matrix(
+            S_distances,
+            sub_dir_path / 'station_distances.csv'
+        )
+    else:
+        S_distances = np.zeros(
+            (N, N), dtype=int).tolist()
+        S_traveltimes = np.ones(
+            (N, N), dtype=int).tolist()
+        write_matrix(
+            S_traveltimes,
+            sub_dir_path / 'station_traveltimes.csv'
+        )
+        write_matrix(
+            S_distances,
+            sub_dir_path / 'station_distances.csv'
+        )
+
+
 def get_station_urls(N, S_codes, sub_dir_path):
     """ステーション情報の取得に必要なステーションごとの詳細サイトURLを取得するメソッド
 
