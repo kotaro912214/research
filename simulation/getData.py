@@ -298,7 +298,7 @@ def get_station_urls(N, S_codes, sub_dir_path):
     """ステーション情報の取得に必要なステーションごとの詳細サイトURLを取得するメソッド
 
     Args:
-        N: int, 読み込むステーション数を示す整数
+        N: int, 読み込むステーション数を示す整数.
         S_codes: list, ステーションを識別するコードが格納されている配列
         sub_dir_path: PureWindowsPath, str, 取得したURLをCSV形式で出力するファイルの相対パス．
 
@@ -317,6 +317,16 @@ def get_station_urls(N, S_codes, sub_dir_path):
 
 
 def get_station_capacities(N, S_urls, sub_dir_path):
+    """スクレイピングによってステーションの駐車可能台数を取得するメソッド
+
+    Args:
+        N: int, 読み込むステーション数を示す整数.
+        S_urls: list, 各ステーションの詳細サイトのURLが格納されている配列．
+        sub_dir_path: PureWindowsPath, str, 取得したURLをCSV形式で出力するファイルの相対パス．
+
+    Returns:
+        None
+    """
     S_capacities = []
     for i in tqdm(range(N), desc='scraiping...'):
         url = S_urls[i]
