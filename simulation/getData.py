@@ -93,6 +93,35 @@ def make_request(base_path, api, params):
     return request
 
 
+def get_response(self, request):
+    """APIのリクエストを投げてレスポンスを返すメソッド
+
+    Args:
+        request: str, make_requestで作成したリクエストURL
+        example:
+
+        'https://api-challenge.navitime.biz/v1s/sid/spot/list?category=0817001002&coord={35.689296,139.702089}&radius=100&limit=10&datum=tokyo'
+
+    Returns:
+        dict, 結果のJSON形式文字列をPython辞書形式で返します．
+        example:
+
+        {'items': [{'coord': {'lat': 52.37839, 'lng': 139.479484}}, ]}
+    """
+    try:
+        response = json.loads(urllib.request.urlopen(request).read())
+    except urllib.error.HTTPError as e:
+        print('** error **', 'got HTTPerror, invalid request was issued')
+        print('code:', e.code)
+        exit()
+    except urllib.error.HTTPError as e:
+        print('** error **', 'We failed to reach a server.')
+        print('reason:', e.reason)
+        exit()
+    else:
+        return response
+
+
 def read_matrix(path):
     """csvファイルを配列として読み込むメソッド
 

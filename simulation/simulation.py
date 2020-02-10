@@ -92,20 +92,6 @@ class Simulation():
         if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
-    def get_response(self, request):
-        try:
-            response = json.loads(urllib.request.urlopen(request).read())
-        except urllib.error.HTTPError as e:
-            print('** error **', 'got HTTPerror, invalid request was issued')
-            print('code:', e.code)
-            exit()
-        except urllib.error.HTTPError as e:
-            print('** error **', 'We failed to reach a server.')
-            print('reason:', e.reason)
-            exit()
-        else:
-            return response
-
     def write_matrix(self, matrix, path, mode='x'):
         file = open(path, mode, encoding='utf-8')
         writer = csv.writer(file, lineterminator='\n')
