@@ -244,13 +244,11 @@ def get_station_traveltimes_and_distances(CONSIDER_TRAVEL_TIME, N, S_coords, KIN
                 range(i + 1, N),
                 desc='searching route of ' + str(i) + '...'
             ):
-                time.sleep(1)
                 if (S_coords[i] != S_coords[j]):
                     params_route['start'] = str(
                         S_coords[i][0]) + ',' + str(S_coords[i][1])
                     params_route['goal'] = str(
                         S_coords[j][0]) + ',' + str(S_coords[j][1])
-                    time.sleep(0.65)
                     request = make_request(
                         KIND_OF_API['route'],
                         params_route
@@ -272,10 +270,8 @@ def get_station_traveltimes_and_distances(CONSIDER_TRAVEL_TIME, N, S_coords, KIN
             sub_dir_path / 'station_distances.csv'
         )
     else:
-        S_distances = np.zeros(
-            (N, N), dtype=int).tolist()
-        S_traveltimes = np.ones(
-            (N, N), dtype=int).tolist()
+        S_distances = np.zeros((N, N), dtype=int).tolist()
+        S_traveltimes = np.ones((N, N), dtype=int).tolist()
         write_matrix(
             S_traveltimes,
             sub_dir_path / 'station_traveltimes.csv'
