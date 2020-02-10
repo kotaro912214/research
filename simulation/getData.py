@@ -93,7 +93,7 @@ def make_request(base_path, api, params):
     return request
 
 
-def get_response(self, request):
+def get_response(request):
     """APIのリクエストを投げてレスポンスを返すメソッド
 
     Args:
@@ -140,6 +140,17 @@ def read_matrix(path):
             return matrix[0]
         else:
             return matrix
+
+
+def write_matrix(matrix, path, mode='x'):
+    file = open(path, mode, encoding='utf-8')
+    writer = csv.writer(file, lineterminator='\n')
+    desc = 'making ' + path.name
+    if (type(matrix[0]) == list or type(matrix[0]) == np.ndarray):
+        writer.writerows(tqdm(matrix, desc=desc))
+    else:
+        writer.writerow(tqdm(matrix, desc=desc))
+    file.close()
 
 
 def is_exist(file_path):

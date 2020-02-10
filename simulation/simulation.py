@@ -92,16 +92,6 @@ class Simulation():
         if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
-    def write_matrix(self, matrix, path, mode='x'):
-        file = open(path, mode, encoding='utf-8')
-        writer = csv.writer(file, lineterminator='\n')
-        desc = 'making ' + path.name
-        if (type(matrix[0]) == list or type(matrix[0]) == np.ndarray):
-            writer.writerows(tqdm(matrix, desc=desc))
-        else:
-            writer.writerow(tqdm(matrix, desc=desc))
-        file.close()
-
     def write_consts(self):
         const_file_path = self.sub_dir_path / ('const.csv')
         self.CONSTS = [
@@ -109,7 +99,7 @@ class Simulation():
             ['NUMBER_OF_EMPLOYEES', self.NUMBER_OF_EMPLOYEES],
             ['TIME', self.TIME],
         ]
-        self.write_matrix(
+        getData.write_matrix(
             self.CONSTS,
             const_file_path
         )
@@ -146,11 +136,11 @@ class Simulation():
                 S_coords.append([spot['coord']['lat'], spot['coord']['lon']])
                 S_codes.append(spot['code'].replace('-', '.'))
             i += 1
-        self.write_matrix(
+        getData.write_matrix(
             S_coords,
             self.coord_file_path
         )
-        self.write_matrix(
+        getData.write_matrix(
             S_codes,
             self.code_file_path
         )
@@ -161,7 +151,7 @@ class Simulation():
         for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='making urls...'):
             url = base_url + self.S_codes[i]
             S_urls.append(url)
-        self.write_matrix(
+        getData.write_matrix(
             S_urls,
             self.url_file_path
         )
@@ -175,7 +165,7 @@ class Simulation():
             detail_contents = soup.find(class_="detail_contents")
             avail_car = detail_contents.find_all("dd")[2].string[:-1]
             S_capacities.append(int(avail_car) + 1)
-        self.write_matrix(
+        getData.write_matrix(
             S_capacities,
             self.capa_file_path
         )
@@ -217,11 +207,11 @@ class Simulation():
                     else:
                         S_distances[i][j] = 0
                         S_traveltimes[i][j] = 0
-            self.write_matrix(
+            getData.write_matrix(
                 S_traveltimes,
                 self.travel_file_path
             )
-            self.write_matrix(
+            getData.write_matrix(
                 S_distances,
                 self.distance_file_path
             )
@@ -230,11 +220,11 @@ class Simulation():
                 (self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
             S_traveltimes = np.ones(
                 (self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS), dtype=int).tolist()
-            self.write_matrix(
+            getData.write_matrix(
                 S_traveltimes,
                 self.travel_file_path
             )
-            self.write_matrix(
+            getData.write_matrix(
                 S_distances,
                 self.distance_file_path
             )
@@ -246,7 +236,7 @@ class Simulation():
                 self.S_vhecles.append(self.ELASTIC_VHECLES)
             else:
                 self.S_vhecles.append(int(capa) - 1)
-        self.write_matrix(
+        getData.write_matrix(
             self.S_vhecles,
             self.vhecle_file_path
         )
@@ -781,7 +771,7 @@ class Simulation():
         success_list = []
         self.travel_distances = {'user': 0, 'jockey': 0}
         result_file_path = self.sub_dir_path / 'result.csv'
-        # self.write_matrix(
+        # getData.write_matrix(
         #     ['demands', 'rsf', 'rse', 'success', 'time_over', 'relocation_rsf_rse', 'relocation_rsf_avail', 'relocation_rse_release'],
         #     result_file_path,
         #     mode='a'
@@ -924,7 +914,7 @@ class Simulation():
                         success += can_contract
 
             if (t == self.TIME):
-                self.write_matrix(
+                getData.write_matrix(
                     [self.LAMBDA, np.array(demands).sum(), rsf, rse, success, time_over,
                      relocation_rsf_rse, relocation_rsf_avail, relocation_rse_release],
                     result_file_path,
@@ -937,7 +927,7 @@ class Simulation():
             Path(self.sub_dir_path / ('available_vhecles.csv')).unlink()
         available_vhecles_for_show = np.insert(
             available_vhecles_for_show, 0, np.arange(self.TIME + 1), axis=0)
-        # self.write_matrix(
+        # getData.write_matrix(
         #     available_vhecles_for_show,
         #     self.sub_dir_path / 'available_vhecles.csv'
         # )
@@ -947,37 +937,37 @@ class Simulation():
         #     ['rse'] + rse_list,
         #     ['success'] + success_list
         # ]
-        # self.write_matrix(
+        # getData.write_matrix(
         #     new_result,
         #     self.sub_dir_path / 'new_result.csv',
         #     mode='a'
         # )
-        self.write_matrix(
+        getData.write_matrix(
             [x for x in self.travel_distances.values()],
             self.sub_dir_path / 'traevl_distances.csv',
             mode='a'
         )
-        # self.write_matrix(
+        # getData.write_matrix(
         #     self.users.user_locations,
         #     self.sub_dir_path / 'user_locations.csv',
         #     mode='w'
         # )
         # if (len(self.moves)):
-        #     self.write_matrix(
+        #     getData.write_matrix(
         #         self.moves,
         #         self.sub_dir_path / 'moves.csv',
         #         mode='a'
         #     )
         # if (self.MAKE_RANDOM_DEMANDS):
         #     for index, demand in enumerate(demands):
-        #         self.write_matrix(
+        #         getData.write_matrix(
         #             demand,
         #             self.sub_dir_path / 'demands.csv',
         #             mode='a'
         #         )
         #         line = '-' * (self.NUMBER_OF_STATIONS * 2)
         #         line = str(index) + line[1:]
-        #         self.write_matrix(
+        #         getData.write_matrix(
         #             [line],
         #             self.sub_dir_path / 'demands.csv',
         #             mode='a'
