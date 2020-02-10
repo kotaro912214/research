@@ -92,20 +92,6 @@ class Simulation():
         if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
-    def get_station_capacities(self):
-        S_capacities = []
-        for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='scraiping...'):
-            url = self.S_urls[i]
-            html = urllib.request.urlopen(url)
-            soup = BeautifulSoup(html, "html.parser")
-            detail_contents = soup.find(class_="detail_contents")
-            avail_car = detail_contents.find_all("dd")[2].string[:-1]
-            S_capacities.append(int(avail_car) + 1)
-        getData.write_matrix(
-            S_capacities,
-            self.capa_file_path
-        )
-
     def get_station_vhecles(self):
         self.S_vhecles = []
         for capa in self.S_capacities:
@@ -153,7 +139,11 @@ class Simulation():
             self.S_capacities = getData.read_matrix(self.capa_file_path)
             self.S_capacities = list(map(int, self.S_capacities))
         else:
-            self.get_station_capacities()
+            self.get_station_capacities(
+                self.NUMBER_OF_STATIONS,
+                self.S_urls,
+                self.sub_dir_path
+            )
             self.get_all_datas()
 
         if (getData.is_exist(self.travel_file_path) and getData.is_exist(self.distance_file_path)):

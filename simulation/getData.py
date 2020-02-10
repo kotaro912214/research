@@ -316,5 +316,20 @@ def get_station_urls(N, S_codes, sub_dir_path):
     )
 
 
+def get_station_capacities(N, S_urls, sub_dir_path):
+    S_capacities = []
+    for i in tqdm(range(N), desc='scraiping...'):
+        url = S_urls[i]
+        html = urllib.request.urlopen(url)
+        soup = BeautifulSoup(html, "html.parser")
+        detail_contents = soup.find(class_="detail_contents")
+        avail_car = detail_contents.find_all("dd")[2].string[:-1]
+        S_capacities.append(int(avail_car) + 1)
+    write_matrix(
+        S_capacities,
+        sub_dir_path / 'station_capacities.csv'
+    )
+
+
 if (__name__ == "__main__"):
     print('use this file as a module')
