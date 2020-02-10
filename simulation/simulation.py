@@ -286,41 +286,6 @@ class Simulation():
                 available_vhecles[i][j] = self.S_vhecles[i]
         return available_vhecles
 
-    def draw_rsf_graph(self):
-        matplotlib.use('Agg')
-        rsf_list = getData.read_matrix(self.sub_dir_path / 'rsf.csv')
-        rsf_list = np.array(rsf_list).astype('int')
-        t = np.linspace(0, self.TIME, self.TIME + 1)
-        plt.plot(t, rsf_list[0], color="red", label='non relocation')
-        plt.plot(t, rsf_list[1], color="blue", label='relocation')
-        plt.legend()
-        plt.grid()
-        plt.title('only rsf considered')
-        plt.xlim(0, self.TIME + 1)
-        plt.ylim(0, np.amax(rsf_list) * 1.1)
-        plt.xlabel('time')
-        plt.ylabel('a number of rsf')
-        plt.savefig(self.sub_dir_path / 'rsf.png')
-        plt.clf()
-
-    def draw_rse_graph(self):
-        matplotlib.use('Agg')
-        rse_list = getData.read_matrix(self.sub_dir_path / 'rse.csv')
-        rse_list = np.array(rse_list).astype('int')
-        plt.plot(np.linspace(0, self.TIME, self.TIME + 1),
-                 rse_list[0], color="red", label='non relocation')
-        plt.plot(np.linspace(0, self.TIME, self.TIME + 1),
-                 rse_list[1], color="blue", label='relocation')
-        plt.legend()
-        plt.grid()
-        plt.title('only rse considered')
-        plt.xlim(0, self.TIME + 1)
-        plt.ylim(0, max(max(rse_list[0]), max(rse_list[1])) * 1.1)
-        plt.xlabel('time')
-        plt.ylabel('a number of rse')
-        plt.savefig(self.sub_dir_path / 'rse.png')
-        plt.clf()
-
     def make_route_coords(self, start, goal):
         params_route_shape = {
             'car': 'only',
