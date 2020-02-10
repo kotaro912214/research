@@ -228,6 +228,18 @@ def get_station_codes_and_coords(N, SELECT_RATIO, sub_dir_path, KIND_OF_API):
 
 
 def get_station_traveltimes_and_distances(CONSIDER_TRAVEL_TIME, N, S_coords, KIND_OF_API, sub_dir_path):
+    """ステーションの移動時間と距離を同時に取得するメソッド
+
+    Args:
+        CONSIDER_TRAVEL_TIME: bool, 移動時間を考慮するかどうかを示すブール値
+        N: int, 読み込むステーション数を示す整数．
+        S_coords: list, ステーションの座標が格納されている配列
+        KIND_OF_API: dict, 利用するAPIの種類とその識別値を格納する辞書
+        sub_dir_path: PureWindowsPath, str, 取得した情報をCSV形式で出力するファイルの相対パス．
+
+    Returns:
+        None
+    """
     if (CONSIDER_TRAVEL_TIME):
         params_route = {
             'car': 'only',
