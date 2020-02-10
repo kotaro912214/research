@@ -177,6 +177,16 @@ def is_exist(file_path):
 
 
 def get_station_codes_and_coords(N, SELECT_RATIO, sub_dir_path, KIND_OF_API):
+    """ステーションの識別コードと座標を取得するメソッド
+
+    Args:
+        N: int, 読み込むステーション数を示す整数．
+        SELECT_RATIO: int, ステーションの選択比率を示す整数．
+        sub_dir_path: PureWindowsPath, str, 取得した情報をCSV形式で出力するファイルの相対パス．
+
+    Returns:
+        None
+    """
     # set the params for spot list request
     params_spot = {
         'category': '',
