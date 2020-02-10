@@ -92,18 +92,6 @@ class Simulation():
         if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
-    def write_consts(self):
-        const_file_path = self.sub_dir_path / ('const.csv')
-        self.CONSTS = [
-            ['NUMBER_OF_STATIONS', self.NUMBER_OF_STATIONS],
-            ['NUMBER_OF_EMPLOYEES', self.NUMBER_OF_EMPLOYEES],
-            ['TIME', self.TIME],
-        ]
-        getData.write_matrix(
-            self.CONSTS,
-            const_file_path
-        )
-
     def get_station_codes_and_coords(self):
         # set the params for spot list request
         params_spot = {
