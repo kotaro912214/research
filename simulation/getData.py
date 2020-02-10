@@ -217,5 +217,17 @@ def get_station_codes_and_coords(N, SELECT_RATIO, sub_dir_path, KIND_OF_API):
     )
 
 
+def get_station_urls(N, S_codes, sub_dir_path):
+    S_urls = []
+    base_url = "https://navitime.co.jp/poi?spt="
+    for i in tqdm(range(N), desc='making urls...'):
+        url = base_url + S_codes[i]
+        S_urls.append(url)
+    write_matrix(
+        S_urls,
+        sub_dir_path / 'station_urls.csv'
+    )
+
+
 if (__name__ == "__main__"):
     print('use this file as a module')

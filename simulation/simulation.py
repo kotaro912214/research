@@ -92,17 +92,6 @@ class Simulation():
         if (self.ELASTIC_VHECLES >= 0):
             Path(self.sub_dir_path / 'station_vhecles.csv').unlink()
 
-    def get_station_urls(self):
-        S_urls = []
-        base_url = "https://navitime.co.jp/poi?spt="
-        for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='making urls...'):
-            url = base_url + self.S_codes[i]
-            S_urls.append(url)
-        getData.write_matrix(
-            S_urls,
-            self.url_file_path
-        )
-
     def get_station_capacities(self):
         S_capacities = []
         for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='scraiping...'):
@@ -212,7 +201,11 @@ class Simulation():
         if (getData.is_exist(self.url_file_path)):
             self.S_urls = getData.read_matrix(self.url_file_path)
         else:
-            self.get_station_urls()
+            getData.get_station_urls(
+                self.NUMBER_OF_STATIONS,
+                self.S_codes,
+                self.sub_dir_path
+            )
             self.get_all_datas()
 
         if (getData.is_exist(self.capa_file_path)):
