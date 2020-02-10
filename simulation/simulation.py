@@ -136,8 +136,8 @@ class Simulation():
             self.KIND_OF_AIP['spot_list'],
             params_spot
         )
-        json_res = self.get_response(request)
-        spots = json_res['items']
+        response = getData.get_response(request)
+        spots = response['items']
         S_coords = []
         S_codes = []
         i = 1
@@ -159,7 +159,6 @@ class Simulation():
         S_urls = []
         base_url = "https://navitime.co.jp/poi?spt="
         for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='making urls...'):
-            time.sleep(1)
             url = base_url + self.S_codes[i]
             S_urls.append(url)
         self.write_matrix(
@@ -171,7 +170,6 @@ class Simulation():
         S_capacities = []
         for i in tqdm(range(self.NUMBER_OF_STATIONS), desc='scraiping...'):
             url = self.S_urls[i]
-            time.sleep(1)
             html = urllib.request.urlopen(url)
             soup = BeautifulSoup(html, "html.parser")
             detail_contents = soup.find(class_="detail_contents")
@@ -211,7 +209,7 @@ class Simulation():
                             self.KIND_OF_AIP['route'],
                             params_route
                         )
-                        response = self.get_response(request)
+                        response = getData.get_response(request)
                         S_distances[i][j] = response['items'][0]['summary']['move']['distance']
                         S_distances[j][i] = response['items'][0]['summary']['move']['distance']
                         S_traveltimes[i][j] = response['items'][0]['summary']['move']['time']
@@ -400,7 +398,7 @@ class Simulation():
             self.KIND_OF_AIP['route_shape'],
             params_route_shape
         )
-        response = self.get_response(request)
+        response = getData.get_response(request)
         route_coords = []
         for path in response['items'][0]['path']:
             route_coords.append(path['coords'])
