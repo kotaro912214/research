@@ -361,6 +361,16 @@ def get_station_vhecles(S_capacities, sub_dir_path):
 
 
 def make_demands(LAMBDA, T, N):
+    """ポアソン分布に従う乱数によって需要行列を作成するメソッド
+
+    Args:
+        LAMBDA: float, 乱数の平均および分散を示す
+        T: int, シミュレーションの実行時間を示す整数
+        N: int, シミュレーションで考慮するステーションの数を示す整数
+
+    Returns:
+        demands: lsit, 生成したTxNxNの三次元需要行列
+    """
     demands = np.random.poisson(lam=LAMBDA, size=(
         T + 1, N, N))
     for t in range(T + 1):
