@@ -573,11 +573,13 @@ class Simulation():
         available_vhecles = self.make_available_vhecles()
         available_vhecles_for_show = self.make_available_vhecles()
         if (self.MAKE_RANDOM_DEMANDS):
-            demands = self.make_random_demands(mode=self.RANDOM_MODE)
+            demands = getData.make_demands(
+                self.LAMBDA, self.TIME, self.NUMBER_OF_STATIONS)
         elif (getData.is_exist(self.base_path / self.DEMAND_PATH)):
             demands = self.read_demands()
         else:
-            demands = self.make_random_demands(mode=self.RANDOM_MODE)
+            demands = getData.make_demands(
+                self.LAMBDA, self.TIME, self.NUMBER_OF_STATIONS)
         # self.make_vhecle_relational_coords()
         rse = 0
         rsf = 0
