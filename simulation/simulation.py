@@ -168,27 +168,6 @@ class Simulation():
             getData.get_station_vhecles(self.S_capacities, self.sub_dir_path)
             self.get_all_datas()
 
-    def make_random_demands(self, mode):
-        if (mode == 'poisson'):
-            demands = np.random.poisson(lam=self.LAMBDA, size=(
-                self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
-        else:
-            demands = np.random.normal(loc=self.MU, scale=self.SIGMA, size=(
-                self.TIME + 1, self.NUMBER_OF_STATIONS, self.NUMBER_OF_STATIONS))
-            demands = np.round(demands).astype('int')
-        for t in range(self.TIME + 1):
-            for i in range(self.NUMBER_OF_STATIONS):
-                for j in range(self.NUMBER_OF_STATIONS):
-                    if (any([
-                        demands[t][i][j] <= 0,
-                        i == j,
-                        t == self.TIME,
-                        j in self.HUB_STATIONS,
-                        i in self.HUB_STATIONS
-                    ])):
-                        demands[t][i][j] = 0
-        return demands
-
     def read_demands(self):
         demads_file_path = self.base_path / self.DEMAND_PATH
         demands = getData.read_matrix(demads_file_path)

@@ -351,5 +351,20 @@ def get_station_vhecles(S_capacities, sub_dir_path):
     )
 
 
+def make_demands(LAMBDA, T, N):
+    demands = np.random.poisson(lam=LAMBDA, size=(
+        T + 1, N, N))
+    for t in range(T + 1):
+        for i in range(N):
+            for j in range(N):
+                if (any([
+                    demands[t][i][j] <= 0,
+                    i == j,
+                    t == T,
+                ])):
+                    demands[t][i][j] = 0
+    return demands
+
+
 if (__name__ == "__main__"):
     print('use this file as a module')
